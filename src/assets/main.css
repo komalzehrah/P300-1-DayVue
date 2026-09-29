@@ -1,0 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Hammersmith+One&family=Livvic:wght@400;500;600;700&display=swap');
+
+@import './base.css';
+
+#app {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
