@@ -1,6 +1,6 @@
-# .
+# DayVue
 
-This template should help get you started developing with Vue 3 in Vite.
+DayVue is a mobile-friendly web app used for scheduling, task management, and habit tracking for a person with ADHD, who wants to manage their time while also capturing patterns that will allow them to make adjustments based on the metrics from the data they input.
 
 ## Recommended IDE Setup
 
