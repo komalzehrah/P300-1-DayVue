@@ -26,10 +26,13 @@ export interface DatedTask {
 
 export interface DatedHabit {
   id: string
-  date: string
   title: string
+  startDate: string
+  endDate?: string
   frequency: string
-  completed: boolean
+  frequencyCount: number
+  frequencyUnit: 'day' | 'week' | 'month'
+  loggedDates: string[]
 }
 
 interface MetricsTask {
@@ -63,10 +66,10 @@ interface MetricsMonth {
 
 const months = metrics.months as MetricsMonth[]
 const habitDefinitions = [
-  { key: 'gym', title: 'Gym' },
-  { key: 'meditation', title: 'Meditation' },
-  { key: 'bedtimeBefore11pm', title: 'Bedtime before 11pm' },
-  { key: 'sketchFor5Minutes', title: 'Sketch for 5 mins' }
+  { key: 'gym', title: 'Gym', frequency: '3 sessions per week', frequencyCount: 3, frequencyUnit: 'week' as const },
+  { key: 'meditation', title: 'Meditation', frequency: 'Daily', frequencyCount: 1, frequencyUnit: 'day' as const },
+  { key: 'bedtimeBefore11pm', title: 'Bedtime before 11pm', frequency: 'Daily', frequencyCount: 1, frequencyUnit: 'day' as const },
+  { key: 'sketchFor5Minutes', title: 'Sketch for 5 mins', frequency: 'Daily', frequencyCount: 1, frequencyUnit: 'day' as const }
 ]
 const categoryColors: Record<string, string> = {
   work: '#1CB5BA',
@@ -167,27 +170,24 @@ const createScheduleItems = () => {
 }
 
 const createHabits = () => {
-  const entries: DatedHabit[] = []
+  return habitDefinitions.map(habit => {
+    const loggedDates = months.flatMap(month => {
+      const [year = 1970, monthNumber = 1] = month.month.split('-').map(Number)
+      const completedDays = month.habits[habit.key]?.completedDays ?? []
+      return completedDays.map(day => dateString(year, monthNumber, day))
+    })
 
-  for (const month of months) {
-    const [year = 1970, monthNumber = 1] = month.month.split('-').map(Number)
-    for (let day = 1; day <= month.daysInMonth; day++) {
-      const date = dateString(year, monthNumber, day)
-      for (const habit of habitDefinitions) {
-        const record = month.habits[habit.key]
-        if (!record) continue
-        entries.push({
-          id: `sample-habit:${date}:${habit.key}`,
-          date,
-          title: habit.title,
-          frequency: record.target,
-          completed: record.completedDays.includes(day)
-        })
-      }
+    return {
+      id: `sample-habit:${habit.key}`,
+      title: habit.title,
+      startDate: '2026-03-01',
+      endDate: '2026-07-31',
+      frequency: habit.frequency,
+      frequencyCount: habit.frequencyCount,
+      frequencyUnit: habit.frequencyUnit,
+      loggedDates
     }
-  }
-
-  return entries
+  })
 }
 
 export const sampleScheduleItems = createScheduleItems()

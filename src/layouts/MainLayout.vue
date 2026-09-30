@@ -69,10 +69,13 @@ const handleAddItem = (item: any) => {
   if (selectedTab.value === 'Habits') {
     habits.value.push({
       id: item.id,
-      date: selectedDate.value,
       title: item.title,
+      startDate: item.startDate ?? selectedDate.value,
+      endDate: item.endDate,
       frequency: item.frequency ?? 'Daily',
-      completed: false
+      frequencyCount: item.frequencyCount ?? 1,
+      frequencyUnit: item.frequencyUnit ?? 'day',
+      loggedDates: item.loggedDates ?? []
     })
     return
   }
@@ -138,6 +141,7 @@ const closeSettings = () => {
     <AddItemModal
       v-if="showAddModal"
       :active-tab="selectedTab === 'Recap' ? 'Schedule' : selectedTab"
+      :default-date="selectedDate"
       @close="toggleAddModal"
       @add-item="handleAddItem"
     />

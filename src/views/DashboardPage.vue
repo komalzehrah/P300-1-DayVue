@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, type Reactive } from 'vue'
+import { computed, inject, onBeforeUnmount, onMounted, ref, type Reactive } from 'vue'
 import { Bar, Line } from 'vue-chartjs'
 import {
   BarElement,
@@ -17,6 +17,20 @@ import {
 import metrics from '@/data/metrics.json'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler, Tooltip, Legend)
+
+const isLightMode = ref(false)
+let themeObserver: MutationObserver | undefined
+
+onMounted(() => {
+  const updateTheme = () => {
+    isLightMode.value = document.body.classList.contains('light-mode')
+  }
+  updateTheme()
+  themeObserver = new MutationObserver(updateTheme)
+  themeObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] })
+})
+
+onBeforeUnmount(() => themeObserver?.disconnect())
 
 type HabitKey = 'gym' | 'meditation' | 'bedtimeBefore11pm' | 'sketchFor5Minutes'
 
@@ -52,12 +66,18 @@ const dateRange = inject<Reactive<DashboardDateRange>>('dashboardDateRange', {
   startDate: '2026-03-01',
   endDate: '2026-07-31'
 })
-const habitSeries: Array<{ key: HabitKey; label: string; color: string }> = [
-  { key: 'gym', label: 'Gym', color: '#e9d985' },
-  { key: 'meditation', label: 'Meditation', color: '#4fbcae' },
-  { key: 'bedtimeBefore11pm', label: 'Bed before 11', color: '#ff8c69' },
-  { key: 'sketchFor5Minutes', label: 'Sketch', color: '#94aee0' }
+const habitSeries: Array<{ key: HabitKey; label: string }> = [
+  { key: 'gym', label: 'Gym' },
+  { key: 'meditation', label: 'Meditation' },
+  { key: 'bedtimeBefore11pm', label: 'Bed before 11' },
+  { key: 'sketchFor5Minutes', label: 'Sketch' }
 ]
+const chartColors = computed(() => isLightMode.value
+  ? { gym: '#a67c00', meditation: '#008777', bedtimeBefore11pm: '#ca4025', sketchFor5Minutes: '#3d5cc7', tasks: '#008777' }
+  : { gym: '#e9d985', meditation: '#4fbcae', bedtimeBefore11pm: '#ff8c69', sketchFor5Minutes: '#94aee0', tasks: '#4fbcae' }
+)
+const chartTextColor = computed(() => isLightMode.value ? '#35413f' : '#9db3b1')
+const chartGridColor = computed(() => isLightMode.value ? 'rgba(38, 83, 76, 0.16)' : 'rgba(157, 179, 177, 0.12)')
 const parseDate = (value: string) => {
   const [year = 1970, month = 1, day = 1] = value.split('-').map(Number)
   return new Date(year, month - 1, day)
@@ -151,8 +171,8 @@ const habitChartData = computed<ChartData<'line'>>(() => ({
   datasets: habitSeries.map(habit => ({
     label: habit.label,
     data: selectedMonths.value.map(month => habitRate(month, habit.key)),
-    borderColor: habit.color,
-    backgroundColor: habit.color,
+    borderColor: chartColors.value[habit.key],
+    backgroundColor: chartColors.value[habit.key],
     tension: 0.35,
     pointRadius: 3,
     pointHoverRadius: 5
@@ -164,37 +184,37 @@ const taskChartData = computed<ChartData<'bar'>>(() => ({
   datasets: [{
     label: 'Tasks completed',
     data: taskRates.value,
-    backgroundColor: '#4fbcae',
-    hoverBackgroundColor: '#68d0c2',
+    backgroundColor: chartColors.value.tasks,
+    hoverBackgroundColor: isLightMode.value ? '#05685f' : '#68d0c2',
     borderRadius: 4,
     maxBarThickness: 28
   }]
 }))
 
-const habitChartOptions: ChartOptions<'line'> = {
+const habitChartOptions = computed<ChartOptions<'line'>>(() => ({
   responsive: true,
   maintainAspectRatio: false,
   interaction: { intersect: false, mode: 'index' },
   plugins: {
     legend: {
       position: 'bottom',
-      labels: { color: '#9db3b1', usePointStyle: true, boxWidth: 8, padding: 18, font: { family: 'Syne' } }
+      labels: { color: chartTextColor.value, usePointStyle: true, boxWidth: 8, padding: 18, font: { family: 'Syne' } }
     },
     tooltip: { callbacks: { label: context => `${context.dataset.label}: ${context.parsed.y}%` } }
   },
   scales: {
-    x: { grid: { display: false }, ticks: { color: '#9db3b1' }, border: { display: false } },
+    x: { grid: { display: false }, ticks: { color: chartTextColor.value }, border: { display: false } },
     y: {
       min: 0,
       max: 100,
-      ticks: { color: '#9db3b1', stepSize: 25, callback: value => `${value}%` },
-      grid: { color: 'rgba(157, 179, 177, 0.12)' },
+      ticks: { color: chartTextColor.value, stepSize: 25, callback: value => `${value}%` },
+      grid: { color: chartGridColor.value },
       border: { display: false }
     }
   }
-}
+}))
 
-const taskChartOptions: ChartOptions<'bar'> = {
+const taskChartOptions = computed<ChartOptions<'bar'>>(() => ({
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
@@ -202,16 +222,16 @@ const taskChartOptions: ChartOptions<'bar'> = {
     tooltip: { callbacks: { label: context => ` ${context.parsed.y}% completed` } }
   },
   scales: {
-    x: { grid: { display: false }, ticks: { color: '#9db3b1' }, border: { display: false } },
+    x: { grid: { display: false }, ticks: { color: chartTextColor.value }, border: { display: false } },
     y: {
       min: 0,
       max: 100,
-      ticks: { color: '#9db3b1', stepSize: 25, callback: value => `${value}%` },
-      grid: { color: 'rgba(157, 179, 177, 0.12)' },
+      ticks: { color: chartTextColor.value, stepSize: 25, callback: value => `${value}%` },
+      grid: { color: chartGridColor.value },
       border: { display: false }
     }
   }
-}
+}))
 
 const formatHighlightDate = (value: string) =>
   new Date(`${value}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })

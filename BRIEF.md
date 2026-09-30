@@ -55,6 +55,18 @@ Generate a fake dataset as a JSON file (src/data/metrics.json).
     -Entered tasks should be editable to update the name, priority, and progress, or to delete them altogether. 
     -Tasks page should include a sort by dropdown to allow sorting by priority or by progress. colored chips will display on the cards for priority and progress levels. tapping on the chips will allow the user to edit the levels.
 
+-Habits page: display a stacked list of cards for entries that are added. these cards will display the title of the habit, and small circles to indicate the days in current calendar month. empty circles represent days when the habit was not logged and filled circles will represent days when it was logged. to mark a habit as logged for a day, there will be a stamp icon within a circle on the left (similar to the circle in the task entry). when clicked, the stamp icon circle will be filled. 
+    -Adding a habit modal:
+        -Habit Name
+        -Start date
+        -Frequency (X times per day/week/month)
+    -Editing a habit modal:
+        -same as adding but add a delete option in the actions (similar to tasks and events)
+
+-Recap page: a dashboard with a view of stats and metrics based on data entered in the other 3 pages. This page can be filtered within a selected date range. summaries and key patterns are displayed as cards.
+    -Include cards:
+        -
+    
 
 
 ## Style

@@ -302,6 +302,36 @@ const deleteTask = (taskId: string) => {
 .progress-in-progress { background: rgba(148, 174, 224, 0.18); color: #a9c0ef; }
 .progress-done { background: rgba(79, 188, 174, 0.14); color: #71d0c4; }
 
+body.light-mode .priority-high {
+  background: #ffe1d8;
+  color: #762b1d;
+}
+
+body.light-mode .priority-medium {
+  background: #f5edc9;
+  color: #564800;
+}
+
+body.light-mode .priority-low {
+  background: #d4eee8;
+  color: #15584f;
+}
+
+body.light-mode .progress-not-started {
+  background: #e8eeed;
+  color: #40504d;
+}
+
+body.light-mode .progress-in-progress {
+  background: #e2eafa;
+  color: #314d79;
+}
+
+body.light-mode .progress-done {
+  background: #d8eee4;
+  color: #205c41;
+}
+
 .edit-repeat-toggle {
   display: flex;
   align-items: center;

@@ -19,6 +19,7 @@ type ItemKind = 'Schedule' | 'Tasks' | 'Habits'
 type TaskPriority = 'low' | 'medium' | 'high'
 type TaskProgress = 'not-started' | 'in-progress' | 'done'
 type RepeatFrequency = 'daily' | 'weekly' | 'custom'
+type HabitFrequencyUnit = 'day' | 'week' | 'month'
 
 interface AddItemData {
   id: string
@@ -33,12 +34,18 @@ interface AddItemData {
   repeat?: boolean
   repeatFrequency?: RepeatFrequency
   repeatInterval?: number
+  startDate?: string
+  endDate?: string
+  frequencyCount?: number
+  frequencyUnit?: HabitFrequencyUnit
+  loggedDates?: string[]
 }
 
 const props = defineProps<{
   activeTab: ItemKind
   mode?: 'add' | 'edit'
   item?: AddItemData
+  defaultDate?: string
 }>()
 
 const emit = defineEmits<{
@@ -73,7 +80,12 @@ const durationMode = ref<'preset' | 'custom'>(
 const showDurationPicker = ref(props.mode === 'edit' && durationMode.value === 'custom')
 const customHours = ref(Math.floor(initialDuration / 60))
 const customMinutes = ref(initialDuration % 60)
-const itemFrequency = ref(props.item?.frequency ?? 'Daily')
+const today = new Date()
+const localToday = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+const itemStartDate = ref(props.item?.startDate ?? props.defaultDate ?? localToday)
+const itemEndDate = ref(props.item?.endDate ?? '')
+const frequencyCount = ref(String(props.item?.frequencyCount ?? 1))
+const frequencyUnit = ref<HabitFrequencyUnit>(props.item?.frequencyUnit ?? 'day')
 const itemPriority = ref<TaskPriority>(props.item?.priority ?? 'medium')
 const itemProgress = ref<TaskProgress>(props.item?.progress ?? 'not-started')
 const repeatTask = ref(props.item?.repeat ?? false)
@@ -129,6 +141,19 @@ const scheduleColors = [
 
 const closeModal = () => emit('close')
 
+const formatHabitFrequency = () => {
+  const count = Math.max(1, Number(frequencyCount.value) || 1)
+  return count === 1 && frequencyUnit.value === 'day'
+    ? 'Daily'
+    : `${count} ${count === 1 ? 'time' : 'times'} per ${frequencyUnit.value}`
+}
+
+const updateHabitStartDate = () => {
+  if (itemEndDate.value && itemEndDate.value < itemStartDate.value) {
+    itemEndDate.value = itemStartDate.value
+  }
+}
+
 const selectDurationPreset = (duration: number) => {
   itemDuration.value = String(duration)
   durationMode.value = 'preset'
@@ -170,7 +195,14 @@ const handleSubmit = () => {
         ...(repeatFrequency.value === 'custom' && { repeatInterval: Number(repeatInterval.value) || 1 })
       })
     }),
-    ...(props.activeTab === 'Habits' && { frequency: itemFrequency.value })
+    ...(props.activeTab === 'Habits' && {
+      startDate: itemStartDate.value,
+      endDate: itemEndDate.value || undefined,
+      frequency: formatHabitFrequency(),
+      frequencyCount: Math.max(1, Number(frequencyCount.value) || 1),
+      frequencyUnit: frequencyUnit.value,
+      loggedDates: props.item?.loggedDates ?? []
+    })
   }
 
   if (props.mode === 'edit') emit('save-item', item)
@@ -191,8 +223,8 @@ const deleteItem = () => {
       <header class="modal-header">
         <h2>
           {{ mode === 'edit'
-            ? activeTab === 'Schedule' ? 'Edit Event' : 'Edit Task'
-            : activeTab === 'Schedule' ? 'Add New Event' : activeTab === 'Tasks' ? 'Add New Task' : 'Add Habits Item' }}
+            ? activeTab === 'Schedule' ? 'Edit Event' : activeTab === 'Tasks' ? 'Edit Task' : 'Edit Habit'
+            : activeTab === 'Schedule' ? 'Add New Event' : activeTab === 'Tasks' ? 'Add New Task' : 'Add New Habit' }}
         </h2>
         <button class="close-btn" aria-label="Close" @click="closeModal">&times;</button>
       </header>
@@ -320,23 +352,37 @@ const deleteItem = () => {
         </div>
 
         <div v-if="activeTab === 'Habits'" class="form-group">
-          <label for="habit-frequency">Frequency</label>
-          <select id="habit-frequency" v-model="itemFrequency">
-            <option>Daily</option>
-            <option>Weekly</option>
-            <option>Monthly</option>
-          </select>
+          <label for="habit-start-date">Start date</label>
+          <input
+            id="habit-start-date"
+            v-model="itemStartDate"
+            type="date"
+            :max="itemEndDate || undefined"
+            @change="updateHabitStartDate"
+          />
+          <label for="habit-end-date">End date <span>(optional)</span></label>
+          <input id="habit-end-date" v-model="itemEndDate" type="date" :min="itemStartDate" />
+          <label>Frequency</label>
+          <div class="habit-frequency-control">
+            <input id="habit-frequency-count" v-model="frequencyCount" type="number" min="1" step="1" aria-label="Times per frequency period" />
+            <span>times per</span>
+            <select id="habit-frequency-unit" v-model="frequencyUnit" aria-label="Frequency period">
+              <option value="day">day</option>
+              <option value="week">week</option>
+              <option value="month">month</option>
+            </select>
+          </div>
         </div>
 
         <footer class="form-actions" :class="{ 'edit-actions': mode === 'edit' }">
           <button v-if="mode === 'edit'" class="delete-btn" type="button" @click="deleteItem">
-            {{ activeTab === 'Schedule' ? 'Delete Event' : 'Delete Task' }}
+            {{ activeTab === 'Schedule' ? 'Delete Event' : activeTab === 'Tasks' ? 'Delete Task' : 'Delete Habit' }}
           </button>
           <button class="cancel-btn" type="button" @click="closeModal">Cancel</button>
           <button class="submit-btn" type="submit">
             {{ mode === 'edit'
-              ? activeTab === 'Schedule' ? 'Save Event' : 'Save Changes'
-              : activeTab === 'Schedule' ? 'Add to Schedule' : activeTab === 'Tasks' ? 'Add to List' : 'Add Habits' }}
+              ? activeTab === 'Schedule' ? 'Save Event' : activeTab === 'Tasks' ? 'Save Changes' : 'Save Habit'
+              : activeTab === 'Schedule' ? 'Add to Schedule' : activeTab === 'Tasks' ? 'Add to List' : 'Add Habit' }}
           </button>
         </footer>
       </form>
@@ -536,6 +582,16 @@ const deleteItem = () => {
 
 .repeat-interval-control input {
   width: 88px;
+}
+
+.habit-frequency-control {
+  display: grid;
+  grid-template-columns: minmax(56px, 0.5fr) auto minmax(110px, 1fr);
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
 }
 
 .form-actions {
