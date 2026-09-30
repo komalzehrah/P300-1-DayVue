@@ -1,29 +1,32 @@
 <script setup lang="ts">
-import { computed, ref, provide } from 'vue'
+import { computed, reactive, ref, provide } from 'vue'
 import { useRouter } from 'vue-router'
 import DatePickerHeader from './DatePickerHeader.vue'
+import DashboardDateRangePicker from './DashboardDateRangePicker.vue'
 import Toolbar from './Toolbar.vue'
 import TabNavigation from './TabNavigation.vue'
 import SettingsDrawer from './SettingsDrawer.vue'
 import AddItemModal from './AddItemModal.vue'
 
 const router = useRouter()
-type NavigationPage = 'Dash' | 'Schedule' | 'Tasks' | 'Habits'
+type NavigationPage = 'Schedule' | 'Tasks' | 'Habits' | 'Recap'
 const showSettingsDrawer = ref(false)
 const showNotificationsDrawer = ref(false)
 const showAddModal = ref(false)
 const selectedTab = computed<NavigationPage>(() => {
   const routeName = router.currentRoute.value.name
-  return routeName === 'Schedule' || routeName === 'Tasks' || routeName === 'Habits' ? routeName : 'Dash'
+  return routeName === 'Schedule' || routeName === 'Tasks' || routeName === 'Habits' ? routeName : 'Recap'
 })
 const today = new Date()
 const selectedDate = ref(
   `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
 )
+const dashboardDateRange = reactive({ startDate: '2026-03-01', endDate: '2026-07-31' })
 const scheduleItems = ref<any[]>([])
 
 provide('scheduleItems', scheduleItems)
 provide('selectedDate', selectedDate)
+provide('dashboardDateRange', dashboardDateRange)
 
 const toggleSettings = () => {
   showSettingsDrawer.value = !showSettingsDrawer.value
@@ -39,7 +42,7 @@ const toggleAddModal = () => {
 
 const selectTab = (tab: NavigationPage) => {
   const paths: Record<NavigationPage, string> = {
-    Dash: '/',
+    Recap: '/',
     Schedule: '/schedule',
     Tasks: '/tasks',
     Habits: '/habits'
@@ -48,7 +51,7 @@ const selectTab = (tab: NavigationPage) => {
 }
 
 const handleAddItem = (item: any) => {
-  if (selectedTab.value === 'Schedule' || selectedTab.value === 'Dash') {
+  if (selectedTab.value === 'Schedule' || selectedTab.value === 'Recap') {
     scheduleItems.value.push(item)
   }
 }
@@ -77,7 +80,17 @@ const closeDrawers = () => {
     </aside>
 
     <main class="main-content">
-      <DatePickerHeader v-model="selectedDate" />
+      <DashboardDateRangePicker
+        v-if="selectedTab === 'Recap'"
+        v-model:start-date="dashboardDateRange.startDate"
+        v-model:end-date="dashboardDateRange.endDate"
+      />
+      <DatePickerHeader
+        v-else
+        v-model="selectedDate"
+        :show-add-item="true"
+        @add-item="toggleAddModal"
+      />
       <div class="page-content">
         <RouterView />
       </div>
@@ -112,7 +125,7 @@ const closeDrawers = () => {
     <!-- Add Item Modal -->
     <AddItemModal
       v-if="showAddModal"
-      :active-tab="selectedTab === 'Dash' ? 'Schedule' : selectedTab"
+      :active-tab="selectedTab === 'Recap' ? 'Schedule' : selectedTab"
       @close="toggleAddModal"
       @add-item="handleAddItem"
     />

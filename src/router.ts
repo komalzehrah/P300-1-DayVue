@@ -7,7 +7,7 @@ import HabitsPage from './views/HabitsPage.vue'
 const routes = [
   {
     path: '/',
-    name: 'Dash',
+    name: 'Recap',
     component: DashboardPage
   },
   {

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed, inject, type Reactive } from 'vue'
 import { Bar, Line } from 'vue-chartjs'
 import {
   BarElement,
@@ -23,6 +24,7 @@ interface TaskMetric {
   repeat: 'daily' | 'once'
   completionRate?: number
   status?: string
+  dueDate?: string
 }
 
 interface ScheduleEvent {
@@ -41,27 +43,66 @@ interface MonthMetric {
 }
 
 const months = metrics.months as MonthMetric[]
+interface DashboardDateRange {
+  startDate: string
+  endDate: string
+}
+
+const dateRange = inject<Reactive<DashboardDateRange>>('dashboardDateRange', {
+  startDate: '2026-03-01',
+  endDate: '2026-07-31'
+})
 const habitSeries: Array<{ key: HabitKey; label: string; color: string }> = [
   { key: 'gym', label: 'Gym', color: '#e9d985' },
   { key: 'meditation', label: 'Meditation', color: '#4fbcae' },
   { key: 'bedtimeBefore11pm', label: 'Bed before 11', color: '#ff8c69' },
   { key: 'sketchFor5Minutes', label: 'Sketch', color: '#94aee0' }
 ]
-const monthLabels = months.map(({ month }) =>
+const parseDate = (value: string) => {
+  const [year = 1970, month = 1, day = 1] = value.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
+
+const monthWindow = (month: MonthMetric) => {
+  const [year = 1970, monthNumber = 1] = month.month.split('-').map(Number)
+  const monthStart = new Date(year, monthNumber - 1, 1)
+  const monthEnd = new Date(year, monthNumber, 0)
+  const rangeStart = parseDate(dateRange.startDate)
+  const rangeEnd = parseDate(dateRange.endDate)
+  const start = rangeStart > monthStart ? rangeStart : monthStart
+  const end = rangeEnd < monthEnd ? rangeEnd : monthEnd
+
+  if (start > end) return null
+
+  return {
+    startDay: start.getDate(),
+    endDay: end.getDate(),
+    dayCount: Math.floor((end.getTime() - start.getTime()) / 86_400_000) + 1
+  }
+}
+
+const selectedMonths = computed(() => months.filter(month => monthWindow(month)))
+const monthLabels = computed(() => selectedMonths.value.map(({ month }) =>
   new Date(`${month}-01T12:00:00`).toLocaleDateString('en-US', { month: 'short' })
-)
+))
 
 const habitRate = (month: MonthMetric, habit: HabitKey) => {
-  const target = habit === 'gym' ? Math.ceil(month.daysInMonth / 7) * 3 : month.daysInMonth
-  return Math.min(100, Math.round((month.habits[habit].completedDays.length / target) * 100))
+  const window = monthWindow(month)
+  if (!window) return 0
+  const completed = month.habits[habit].completedDays.filter(day => day >= window.startDay && day <= window.endDay).length
+  const target = habit === 'gym' ? Math.ceil(window.dayCount / 7) * 3 : window.dayCount
+  return Math.min(100, Math.round((completed / target) * 100))
 }
 
 const taskRate = (month: MonthMetric) => {
+  const window = monthWindow(month)
+  if (!window) return 0
   const totals = month.tasks.reduce((result, task) => {
     if (task.repeat === 'daily') {
-      result.total += month.daysInMonth
-      result.completed += month.daysInMonth * (task.completionRate ?? 0)
+      result.total += window.dayCount
+      result.completed += window.dayCount * (task.completionRate ?? 0)
     } else {
+      if (!task.dueDate || task.dueDate < dateRange.startDate || task.dueDate > dateRange.endDate) return result
       result.total += 1
       if (task.status === 'completed') result.completed += 1
     }
@@ -71,43 +112,64 @@ const taskRate = (month: MonthMetric) => {
   return Math.round((totals.completed / totals.total) * 100)
 }
 
-const taskRates = months.map(taskRate)
-const taskFollowThrough = Math.round(taskRates.reduce((sum, rate) => sum + rate, 0) / taskRates.length)
-const habitConsistency = Math.round(
-  months.reduce((sum, month) => sum + habitSeries.reduce((monthSum, habit) => monthSum + habitRate(month, habit.key), 0), 0)
-  / (months.length * habitSeries.length)
-)
-const eventCount = months.reduce((sum, month) => sum + month.schedule.events.length, 0)
-const gymSessions = months.reduce((sum, month) => sum + month.habits.gym.completedDays.length, 0)
-const latestMonth = months[months.length - 1]!
-const highlights = latestMonth.schedule.events
+const taskRates = computed(() => selectedMonths.value.map(taskRate))
+const taskFollowThrough = computed(() => {
+  const rates = taskRates.value
+  return rates.length ? Math.round(rates.reduce((sum, rate) => sum + rate, 0) / rates.length) : 0
+})
+const habitConsistency = computed(() => {
+  const rates = selectedMonths.value.flatMap(month => habitSeries.map(habit => habitRate(month, habit.key)))
+  return rates.length ? Math.round(rates.reduce((sum, rate) => sum + rate, 0) / rates.length) : 0
+})
+const eventsInRange = computed(() => months.flatMap(month => month.schedule.events)
+  .filter(event => event.date >= dateRange.startDate && event.date <= dateRange.endDate))
+const eventCount = computed(() => eventsInRange.value.length)
+const gymSessions = computed(() => selectedMonths.value.reduce((sum, month) => {
+  const window = monthWindow(month)
+  if (!window) return sum
+  return sum + month.habits.gym.completedDays.filter(day => day >= window.startDay && day <= window.endDay).length
+}, 0))
+const highlights = computed(() => eventsInRange.value
   .filter(event => event.category === 'family' || event.category === 'social')
-  .slice(0, 4)
+  .slice(-4))
+const highlightMonth = computed(() => {
+  const lastMonth = selectedMonths.value[selectedMonths.value.length - 1]
+  return lastMonth
+    ? new Date(`${lastMonth.month}-01T12:00:00`).toLocaleDateString('en-US', { month: 'long' })
+    : 'Selected period'
+})
+const dateRangeLabel = computed(() => {
+  const start = parseDate(dateRange.startDate)
+  const end = parseDate(dateRange.endDate)
+  const startLabel = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const endLabel = end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return `${startLabel} - ${endLabel}`
+})
 
-const habitChartData: ChartData<'line'> = {
-  labels: monthLabels,
+const habitChartData = computed<ChartData<'line'>>(() => ({
+  labels: monthLabels.value,
   datasets: habitSeries.map(habit => ({
     label: habit.label,
-    data: months.map(month => habitRate(month, habit.key)),
+    data: selectedMonths.value.map(month => habitRate(month, habit.key)),
     borderColor: habit.color,
     backgroundColor: habit.color,
     tension: 0.35,
     pointRadius: 3,
     pointHoverRadius: 5
   }))
-}
+}))
 
-const taskChartData: ChartData<'bar'> = {
-  labels: monthLabels,
+const taskChartData = computed<ChartData<'bar'>>(() => ({
+  labels: monthLabels.value,
   datasets: [{
     label: 'Tasks completed',
-    data: taskRates,
+    data: taskRates.value,
     backgroundColor: '#4fbcae',
     hoverBackgroundColor: '#68d0c2',
     borderRadius: 4,
     maxBarThickness: 28
   }]
-}
+}))
 
 const habitChartOptions: ChartOptions<'line'> = {
   responsive: true,
@@ -160,16 +222,15 @@ const formatHighlightDate = (value: string) =>
     <header class="dashboard-heading">
       <div>
         <p class="dashboard-kicker">OVERVIEW</p>
-        <h1>Dash</h1>
+        <h1>Recap</h1>
       </div>
-      <span class="date-range">March - July 2026</span>
     </header>
 
-    <section class="summary-grid" aria-label="Five-month summary">
+    <section class="summary-grid" :aria-label="`Summary for ${dateRangeLabel}`">
       <article class="summary-item">
         <span class="summary-label">Task follow-through</span>
         <strong>{{ taskFollowThrough }}<small>%</small></strong>
-        <span class="summary-note">Average across five months</span>
+        <span class="summary-note">Average across selected months</span>
       </article>
       <article class="summary-item">
         <span class="summary-label">Habit consistency</span>
@@ -184,7 +245,7 @@ const formatHighlightDate = (value: string) =>
       <article class="summary-item">
         <span class="summary-label">Gym sessions</span>
         <strong>{{ gymSessions }}</strong>
-        <span class="summary-note">Recorded over five months</span>
+        <span class="summary-note">Recorded in selected range</span>
       </article>
     </section>
 
@@ -212,7 +273,7 @@ const formatHighlightDate = (value: string) =>
 
     <section class="highlights-section">
       <div class="panel-heading">
-        <h2>July, outside work</h2>
+          <h2>{{ highlightMonth }}, outside work</h2>
         <span>Family and social commitments</span>
       </div>
       <ul class="highlights-list">

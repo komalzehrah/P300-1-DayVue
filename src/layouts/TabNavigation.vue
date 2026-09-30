@@ -1,20 +1,27 @@
 <script setup lang="ts">
-import { HomeIcon, CalendarIcon, CheckIcon, SparklesIcon, PlusIcon } from '@heroicons/vue/24/outline'
+import {
+  Squares2X2Icon,
+  CalendarDaysIcon,
+  ClipboardDocumentCheckIcon,
+  ArrowPathIcon,
+  ClockIcon,
+  PlusIcon
+} from '@heroicons/vue/24/outline'
 
 defineProps<{
-  selectedTab: 'Dash' | 'Schedule' | 'Tasks' | 'Habits'
+  selectedTab: 'Schedule' | 'Tasks' | 'Habits' | 'Recap'
 }>()
 
 const emit = defineEmits<{
-  'select-tab': [tab: 'Dash' | 'Schedule' | 'Tasks' | 'Habits']
+  'select-tab': [tab: 'Schedule' | 'Tasks' | 'Habits' | 'Recap']
   'toggle-add': []
 }>()
 
 const tabs = [
-  { name: 'Dash', icon: HomeIcon },
-  { name: 'Schedule', icon: CalendarIcon },
-  { name: 'Tasks', icon: CheckIcon },
-  { name: 'Habits', icon: SparklesIcon }
+  { name: 'Schedule', icon: CalendarDaysIcon },
+  { name: 'Tasks', icon: ClipboardDocumentCheckIcon },
+  { name: 'Habits', icon: ArrowPathIcon },
+  { name: 'Recap', icon: ClockIcon }
 ] as const
 
 type TabName = typeof tabs[number]['name']
@@ -28,6 +35,8 @@ type TabName = typeof tabs[number]['name']
         :key="tab.name"
         class="tab"
         :class="{ active: selectedTab === tab.name }"
+        :aria-label="tab.name"
+        :title="tab.name"
         @click="emit('select-tab', tab.name as TabName)"
       >
         <component :is="tab.icon" class="tab-icon" />
@@ -35,7 +44,7 @@ type TabName = typeof tabs[number]['name']
       </button>
     </div>
     
-    <button class="add-button" @click="$emit('toggle-add')" aria-label="Add Item">
+    <button v-if="selectedTab !== 'Recap'" class="add-button mobile-add" @click="$emit('toggle-add')" aria-label="Add Item">
       <PlusIcon />
       <span class="add-label">Add item</span>
     </button>
@@ -60,6 +69,10 @@ type TabName = typeof tabs[number]['name']
   border-radius: 24px;
   padding: 0.3rem;
   position: relative;
+}
+
+.tab-label {
+  display: none;
 }
 
 .tab {
@@ -100,6 +113,10 @@ type TabName = typeof tabs[number]['name']
   box-shadow: 0 2px 8px rgba(233, 217, 133, 0.2);
 }
 
+.tab.active .tab-label {
+  display: inline;
+}
+
 .tab.active .tab-icon {
   font-weight: 700;
 }
@@ -124,6 +141,18 @@ type TabName = typeof tabs[number]['name']
 
 .add-label {
   display: none;
+}
+
+@media (min-width: 768px) {
+  .mobile-add {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .sidebar-add {
+    display: none;
+  }
 }
 
 .add-button :deep(svg) {
@@ -194,6 +223,31 @@ body.light-mode .tab.active {
 
   .tab {
     font-size: 0.95rem;
+  }
+
+  .tab-label {
+    display: inline;
+  }
+}
+
+@media (max-width: 767px) {
+  .tab-container {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+    justify-content: space-between;
+  }
+
+  .tab {
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
+    padding-right: 0.25rem;
+    padding-left: 0.25rem;
+  }
+
+  .tab.active {
+    flex: 1.5;
   }
 }
 

@@ -28,14 +28,13 @@ Generate a fake dataset as a JSON file (src/data/metrics.json).
 
 ## Layout (Vuetify)
 -Mobile-friendly, desktop and tablet view uses left nav sidebar with stacked links while the mobile view shifts to the toggle switch tabs.
--Homepage dashboard with summary cards for the following pages:
-    -Schedule 
-        -the day's schedule at a glance with a snapshot of current or upcoming events, maximum of 3 events.
-        -number of events for the day
-    -Tasks
-        -number of tasks for the day, highlighting how many were completed, how many are in progress, and how many have not been started
-    -Habits
-        -highlight active habits, displaying progress on them and bringing attention to any habits that have maintained a streak of more than 5 consecutive entries.
+-Progress dashboard with summary cards of user entered entered data.
+  
+-Navigation should show 4 pages:
+    -Schedule - with a calendar icon
+    -Tasks - with a checklist icon
+    -Habits - with a repeat icon
+    -Recap - a historical, filterable view of user's progress based on their entries for the other three pages
 
 ## Style
 -Use Google font Outfit Medium 500 as the logo and button font
