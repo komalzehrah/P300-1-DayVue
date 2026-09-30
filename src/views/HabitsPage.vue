@@ -281,14 +281,14 @@ const deleteHabit = (habitId: string) => {
   margin: 0;
   color: var(--text-primary);
   font-family: var(--font-body);
-  font-size: 1.2rem;
+  font-size: calc(1.2rem + 2pt);
   font-weight: 400;
 }
 
 .habits-heading > span {
   color: var(--text-secondary);
   font-family: var(--font-ui);
-  font-size: 0.8rem;
+  font-size: calc(0.8rem + 2pt);
 }
 
 .habits-list {
@@ -319,7 +319,9 @@ const deleteHabit = (habitId: string) => {
   border: 1px solid var(--border-color);
   border-radius: 12px;
   background: var(--bg-secondary);
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .habit-card:hover {
@@ -338,7 +340,9 @@ const deleteHabit = (habitId: string) => {
   background: transparent;
   color: #051515;
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .habit-stamp.logged {
@@ -373,7 +377,7 @@ const deleteHabit = (habitId: string) => {
   margin: 0;
   color: var(--text-primary);
   font-family: var(--font-body);
-  font-size: 0.95rem;
+  font-size: calc(0.95rem + 2pt);
   font-weight: 400;
   overflow-wrap: anywhere;
 }
@@ -397,7 +401,7 @@ const deleteHabit = (habitId: string) => {
   background: var(--bg-tertiary);
   color: var(--text-secondary);
   font-family: var(--font-ui);
-  font-size: 0.66rem;
+  font-size: calc(0.66rem + 2pt);
   font-weight: 500;
   white-space: nowrap;
 }
@@ -450,7 +454,7 @@ const deleteHabit = (habitId: string) => {
   background: transparent;
   color: var(--text-secondary);
   font-family: var(--font-ui);
-  font-size: 0.58rem;
+  font-size: calc(0.58rem + 2pt);
 }
 
 .habit-day.unavailable {
@@ -488,7 +492,7 @@ const deleteHabit = (habitId: string) => {
   color: var(--text-secondary);
   cursor: pointer;
   font-family: var(--font-ui);
-  font-size: 0.8rem;
+  font-size: calc(0.8rem + 2pt);
   font-weight: 500;
 }
 
@@ -509,7 +513,7 @@ const deleteHabit = (habitId: string) => {
   margin: 0 0 0.75rem;
   color: var(--text-primary);
   font-family: var(--font-body);
-  font-size: 1rem;
+  font-size: calc(1rem + 2pt);
   font-weight: 400;
 }
 
@@ -545,7 +549,7 @@ const deleteHabit = (habitId: string) => {
   margin: 0;
   color: var(--text-primary);
   font-family: var(--font-body);
-  font-size: 0.9rem;
+  font-size: calc(0.9rem + 2pt);
   font-weight: 400;
 }
 
@@ -555,7 +559,7 @@ const deleteHabit = (habitId: string) => {
 .no-previous-habits {
   color: var(--text-secondary);
   font-family: var(--font-body);
-  font-size: 0.75rem;
+  font-size: calc(0.75rem + 2pt);
 }
 
 .previous-habit-dates {

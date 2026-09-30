@@ -365,7 +365,7 @@ const deleteItem = (itemId: string) => {
   margin: 0;
   color: var(--text-primary);
   font-family: var(--font-body);
-  font-size: 1.2rem;
+  font-size: calc(1.2rem + 2pt);
   font-weight: 400;
 }
 
@@ -404,9 +404,11 @@ const deleteItem = (itemId: string) => {
   color: var(--text-secondary);
   cursor: pointer;
   font-family: var(--font-ui);
-  font-size: 0.85rem;
+  font-size: calc(0.85rem + 2pt);
   font-weight: 500;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
 }
 
 .view-option:hover {
@@ -424,7 +426,7 @@ const deleteItem = (itemId: string) => {
   justify-self: end;
   color: var(--text-secondary);
   font-family: var(--font-body);
-  font-size: 0.875rem;
+  font-size: calc(0.875rem + 2pt);
   text-align: right;
 }
 
@@ -460,7 +462,7 @@ const deleteItem = (itemId: string) => {
 .week-day-heading strong {
   color: var(--text-primary);
   font-family: var(--font-ui);
-  font-size: 1.1rem;
+  font-size: calc(1.1rem + 2pt);
   font-weight: 500;
 }
 
@@ -492,14 +494,14 @@ const deleteItem = (itemId: string) => {
   color: var(--text-primary);
   cursor: pointer;
   font-family: var(--font-body);
-  font-size: 0.8rem;
+  font-size: calc(0.8rem + 2pt);
   text-align: left;
 }
 
 .week-event time {
   color: var(--text-secondary);
   font-family: var(--font-ui);
-  font-size: 0.72rem;
+  font-size: calc(0.72rem + 2pt);
   white-space: nowrap;
 }
 
@@ -532,7 +534,7 @@ const deleteItem = (itemId: string) => {
   padding: 0.4rem 0.5rem;
   color: var(--text-secondary);
   font-family: var(--font-body);
-  font-size: 0.75rem;
+  font-size: calc(0.75rem + 2pt);
   text-align: center;
 }
 
@@ -551,7 +553,7 @@ const deleteItem = (itemId: string) => {
   background: var(--bg-tertiary);
   color: var(--text-secondary);
   font-family: var(--font-ui);
-  font-size: 0.72rem;
+  font-size: calc(0.72rem + 2pt);
   font-weight: 500;
   text-align: center;
 }
@@ -578,7 +580,7 @@ const deleteItem = (itemId: string) => {
   color: var(--text-primary);
   cursor: pointer;
   font-family: var(--font-ui);
-  font-size: 0.8rem;
+  font-size: calc(0.8rem + 2pt);
   font-weight: 500;
 }
 
@@ -607,7 +609,7 @@ const deleteItem = (itemId: string) => {
   background: var(--bg-tertiary);
   color: var(--text-primary);
   cursor: pointer;
-  font-size: 0.65rem;
+  font-size: calc(0.65rem + 2pt);
   text-align: left;
 }
 
@@ -636,7 +638,7 @@ const deleteItem = (itemId: string) => {
 
 .more-events {
   color: var(--text-secondary);
-  font-size: 0.62rem;
+  font-size: calc(0.62rem + 2pt);
 }
 
 .date-header {
@@ -657,7 +659,7 @@ const deleteItem = (itemId: string) => {
 
 .date-text {
   font-family: var(--font-body);
-  font-size: 1rem;
+  font-size: calc(1rem + 2pt);
   font-weight: 500;
   color: var(--text-primary);
   margin: 0;
@@ -670,7 +672,7 @@ const deleteItem = (itemId: string) => {
 
 .day-name {
   font-family: var(--font-body);
-  font-size: 1rem;
+  font-size: calc(1rem + 2pt);
   font-weight: 500;
   color: var(--text-primary);
   margin: 0;
@@ -678,7 +680,7 @@ const deleteItem = (itemId: string) => {
 
 .date-value {
   font-family: var(--font-body);
-  font-size: 1rem;
+  font-size: calc(1rem + 2pt);
   font-weight: 500;
   color: var(--text-secondary);
   margin: 0;
@@ -693,7 +695,9 @@ const deleteItem = (itemId: string) => {
   align-items: center;
   justify-content: center;
   color: var(--accent-color);
-  transition: color 0.2s ease, transform 0.2s ease;
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .date-picker-btn:hover {
@@ -741,7 +745,7 @@ const deleteItem = (itemId: string) => {
 
 .month-year {
   font-family: var(--font-body);
-  font-size: 1.1rem;
+  font-size: calc(1.1rem + 2pt);
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
@@ -758,7 +762,9 @@ const deleteItem = (itemId: string) => {
   align-items: center;
   justify-content: center;
   color: var(--accent-color);
-  transition: color 0.2s ease, transform 0.2s ease;
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .nav-btn:hover {
@@ -782,7 +788,7 @@ const deleteItem = (itemId: string) => {
 .weekday-header {
   text-align: center;
   font-family: var(--font-body);
-  font-size: 0.75rem;
+  font-size: calc(0.75rem + 2pt);
   font-weight: 600;
   color: var(--text-secondary);
   padding: 0.5rem 0;
@@ -795,7 +801,7 @@ const deleteItem = (itemId: string) => {
   background: var(--bg-tertiary);
   color: var(--text-primary);
   font-family: var(--font-ui);
-  font-size: 0.9rem;
+  font-size: calc(0.9rem + 2pt);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -858,7 +864,7 @@ const deleteItem = (itemId: string) => {
   justify-content: flex-end;
   padding-top: 0;
   padding-right: 0.25rem;
-  font-size: 0.75rem;
+  font-size: calc(0.75rem + 2pt);
   color: var(--text-secondary);
   font-weight: 500;
 }
@@ -897,13 +903,13 @@ const deleteItem = (itemId: string) => {
   color: #000;
   padding: 0.5rem;
   border-radius: 6px;
-  font-size: 0.8rem;
+  font-size: calc(0.8rem + 2pt);
   overflow: hidden;
   word-break: break-word;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   min-height: 2rem;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.4rem;
   justify-content: flex-start;
   transition: all 0.2s ease;
@@ -930,13 +936,10 @@ const deleteItem = (itemId: string) => {
 
 .schedule-item strong {
   display: block;
+  min-width: 0;
+  flex: 1 1 auto;
   font-family: var(--font-body);
   font-weight: 600;
-  margin-bottom: 0.25rem;
-}
-
-.schedule-item.compact-event strong {
-  margin-bottom: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -949,7 +952,8 @@ const deleteItem = (itemId: string) => {
   height: 24px;
   place-items: center;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.14);
+  background: #fff;
+  color: #051515;
 }
 
 .compact-event .event-icon {
@@ -971,26 +975,20 @@ const deleteItem = (itemId: string) => {
 
 .event-copy {
   display: flex;
+  align-items: center;
   min-width: 0;
   flex: 1;
-  flex-direction: column;
-}
-
-.schedule-item.compact-event .event-copy {
-  align-items: center;
   flex-direction: row;
   gap: 0.35rem;
   overflow: hidden;
 }
 
-.schedule-item.compact-event small {
-  flex: 0 0 auto;
-}
-
 .schedule-item small {
   display: block;
+  flex: 0 0 auto;
+  white-space: nowrap;
   opacity: 0.8;
-  font-size: 0.7rem;
+  font-size: calc(0.7rem + 2pt);
 }
 
 @media (min-width: 481px) {
@@ -1015,16 +1013,16 @@ const deleteItem = (itemId: string) => {
 
   .hour-label {
     padding-right: 0.5rem;
-    font-size: 0.8rem;
+    font-size: calc(0.8rem + 2pt);
   }
 
   .schedule-item {
     padding: 0.75rem;
-    font-size: 0.9rem;
+    font-size: calc(0.9rem + 2pt);
   }
 
   .schedule-item strong {
-    font-size: 0.95rem;
+    font-size: calc(0.95rem + 2pt);
   }
 
   .week-grid {
@@ -1052,7 +1050,7 @@ const deleteItem = (itemId: string) => {
     grid-template-columns: 18px minmax(0, 1fr);
     gap: 0.2rem;
     padding: 0.4rem;
-    font-size: 0.72rem;
+    font-size: calc(0.72rem + 2pt);
   }
 
   .week-event-icon {

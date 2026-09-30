@@ -309,7 +309,7 @@ const applyRange = () => {
   color: var(--text-primary);
   cursor: pointer;
   font-family: var(--font-ui);
-  font-size: 1rem;
+  font-size: calc(1rem + 2pt);
   font-weight: 500;
   letter-spacing: 0.02em;
 }
@@ -372,7 +372,7 @@ const applyRange = () => {
   color: var(--text-secondary);
   cursor: pointer;
   font-family: var(--font-body);
-  font-size: 0.75rem;
+  font-size: calc(0.75rem + 2pt);
   text-align: left;
 }
 
@@ -417,7 +417,7 @@ const applyRange = () => {
   margin: 0;
   color: var(--text-primary);
   font-family: var(--font-ui);
-  font-size: 0.85rem;
+  font-size: calc(0.85rem + 2pt);
   font-weight: 500;
   text-align: center;
 }
@@ -464,7 +464,7 @@ const applyRange = () => {
   margin-bottom: 0.3rem;
   color: var(--text-secondary);
   font-family: var(--font-ui);
-  font-size: 0.68rem;
+  font-size: calc(0.68rem + 2pt);
   font-weight: 500;
 }
 
@@ -487,7 +487,7 @@ const applyRange = () => {
   color: var(--text-primary);
   cursor: pointer;
   font-family: var(--font-ui);
-  font-size: 0.75rem;
+  font-size: calc(0.75rem + 2pt);
 }
 
 .calendar-date:hover:not(:disabled) {
@@ -531,7 +531,7 @@ const applyRange = () => {
   gap: 0.25rem;
   color: var(--text-secondary);
   font-family: var(--font-body);
-  font-size: 0.62rem;
+  font-size: calc(0.62rem + 2pt);
 }
 
 .date-fields input {
@@ -543,7 +543,7 @@ const applyRange = () => {
   background: var(--bg-primary);
   color: var(--text-primary);
   font-family: var(--font-ui);
-  font-size: 0.72rem;
+  font-size: calc(0.72rem + 2pt);
   color-scheme: dark;
 }
 
@@ -568,7 +568,7 @@ const applyRange = () => {
   border-radius: 6px;
   cursor: pointer;
   font-family: var(--font-ui);
-  font-size: 0.85rem;
+  font-size: calc(0.85rem + 2pt);
   font-weight: 500;
 }
 
@@ -578,9 +578,14 @@ const applyRange = () => {
 }
 
 .apply-range {
-  border-color: #83e3a0;
-  background: #83e3a0;
+  border-color: #ff8c69;
+  background: #ff8c69;
   color: #051515;
+}
+
+.apply-range:hover:not(:disabled) {
+  border-color: #ff7a52;
+  background: #ff7a52;
 }
 
 .apply-range:disabled {

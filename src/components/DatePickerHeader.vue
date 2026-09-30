@@ -162,7 +162,7 @@ const isSelected = (date: Date | null) => {
 .date-text {
   color: var(--text-primary);
   font-family: var(--font-ui);
-  font-size: 16px;
+  font-size: calc(16px + 2pt);
   font-weight: 500;
   letter-spacing: 0.02em;
 }
@@ -182,7 +182,9 @@ const isSelected = (date: Date | null) => {
   background: transparent;
   color: var(--accent-color);
   cursor: pointer;
-  transition: color 0.2s ease, transform 0.2s ease;
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .date-picker-btn:hover,
@@ -209,9 +211,11 @@ const isSelected = (date: Date | null) => {
   color: #051515;
   cursor: pointer;
   font-family: var(--font-ui);
-  font-size: 0.9rem;
+  font-size: calc(0.9rem + 2pt);
   font-weight: 500;
-  transition: background 0.2s ease, transform 0.2s ease;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
 }
 
 .date-add-button:hover {
@@ -265,7 +269,7 @@ const isSelected = (date: Date | null) => {
   margin: 0;
   color: var(--text-primary);
   font-family: var(--font-body);
-  font-size: 1.1rem;
+  font-size: calc(1.1rem + 2pt);
   font-weight: 600;
   text-align: center;
 }
@@ -286,7 +290,7 @@ const isSelected = (date: Date | null) => {
   padding: 0.5rem 0;
   color: var(--text-secondary);
   font-family: var(--font-body);
-  font-size: 0.75rem;
+  font-size: calc(0.75rem + 2pt);
   font-weight: 600;
   text-align: center;
 }
@@ -299,7 +303,7 @@ const isSelected = (date: Date | null) => {
   color: var(--text-primary);
   cursor: pointer;
   font-family: var(--font-ui);
-  font-size: 0.9rem;
+  font-size: calc(0.9rem + 2pt);
   font-weight: 500;
 }
 

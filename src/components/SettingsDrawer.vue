@@ -101,7 +101,7 @@ const toggleDarkMode = () => {
 .drawer-header h2 {
   font-family: var(--font-body);
   font-weight: 600;
-  font-size: 1.2rem;
+  font-size: calc(1.2rem + 2pt);
 }
 
 .close-btn {
@@ -144,7 +144,7 @@ const toggleDarkMode = () => {
 
 .setting-label {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 0.5rem;
 }
 
@@ -188,13 +188,13 @@ const toggleDarkMode = () => {
 }
 
 .slider::before {
-  content: '';
+  content: "";
   position: absolute;
   height: 24px;
   width: 24px;
   left: 2px;
   bottom: 2px;
-  background-color: #F6F2E4;
+  background-color: #f6f2e4;
   border-radius: 50%;
   transition: transform 0.3s ease;
 }

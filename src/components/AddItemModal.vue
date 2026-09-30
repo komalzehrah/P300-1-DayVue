@@ -438,8 +438,14 @@ const deleteItem = () => {
 }
 
 @keyframes modalOpen {
-  from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
-  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
 }
 
 .modal-content {
@@ -457,7 +463,7 @@ const deleteItem = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.5rem;
+  padding: 0.75rem 1.5rem;
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -465,7 +471,7 @@ const deleteItem = () => {
   margin: 0;
   color: var(--text-primary);
   font-family: var(--font-body);
-  font-size: 1.3rem;
+  font-size: calc(1.05rem + 2pt);
   font-weight: 600;
 }
 
@@ -479,7 +485,7 @@ const deleteItem = () => {
   background: transparent;
   color: var(--text-primary);
   cursor: pointer;
-  font-size: 1.3rem;
+  font-size: calc(1.3rem + 2pt);
 }
 
 .modal-form {
@@ -498,7 +504,7 @@ const deleteItem = () => {
 .form-group > label {
   color: var(--text-primary);
   font-family: var(--font-body);
-  font-size: 0.95rem;
+  font-size: calc(0.95rem + 2pt);
   font-weight: 600;
 }
 
@@ -511,7 +517,7 @@ const deleteItem = () => {
   background: var(--bg-tertiary);
   color: var(--text-primary);
   font-family: var(--font-body);
-  font-size: 0.95rem;
+  font-size: calc(0.95rem + 2pt);
 }
 
 .form-group input:focus,
@@ -540,7 +546,7 @@ const deleteItem = () => {
   color: var(--text-secondary);
   cursor: pointer;
   font-family: var(--font-ui);
-  font-size: 0.78rem;
+  font-size: calc(0.78rem + 2pt);
   font-weight: 500;
 }
 
@@ -565,7 +571,7 @@ const deleteItem = () => {
   gap: 0.35rem;
   color: var(--text-secondary);
   font-family: var(--font-body);
-  font-size: 0.8rem;
+  font-size: calc(0.8rem + 2pt);
 }
 
 .custom-duration-picker select {
@@ -578,7 +584,7 @@ const deleteItem = () => {
   background: var(--bg-secondary);
   color: var(--text-primary);
   font-family: var(--font-ui);
-  font-size: 0.9rem;
+  font-size: calc(0.9rem + 2pt);
 }
 
 .repeat-toggle {
@@ -603,7 +609,7 @@ const deleteItem = () => {
   gap: 0.6rem;
   color: var(--text-secondary);
   font-family: var(--font-body);
-  font-size: 0.85rem;
+  font-size: calc(0.85rem + 2pt);
 }
 
 .repeat-interval-control input {
@@ -617,7 +623,7 @@ const deleteItem = () => {
   gap: 0.5rem;
   color: var(--text-secondary);
   font-family: var(--font-body);
-  font-size: 0.8rem;
+  font-size: calc(0.8rem + 2pt);
 }
 
 .form-actions {
@@ -642,7 +648,7 @@ const deleteItem = () => {
   border-radius: 6px;
   cursor: pointer;
   font-family: var(--font-ui);
-  font-size: 0.85rem;
+  font-size: calc(0.85rem + 2pt);
   font-weight: 500;
 }
 
@@ -697,7 +703,9 @@ body.light-mode .form-actions .delete-btn {
   border: 2px solid transparent;
   border-radius: 50%;
   cursor: pointer;
-  transition: border-color 0.2s ease, transform 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .icon-option {
@@ -728,6 +736,8 @@ body.light-mode .form-actions .delete-btn {
 
 .color-option.active {
   border-color: var(--text-primary);
-  box-shadow: 0 0 0 2px var(--bg-secondary), 0 0 0 4px var(--text-primary);
+  box-shadow:
+    0 0 0 2px var(--bg-secondary),
+    0 0 0 4px var(--text-primary);
 }
 </style>

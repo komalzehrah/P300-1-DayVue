@@ -69,7 +69,8 @@ body.light-mode .sun-icon {
 }
 
 .icon-btn:hover {
-  transform: scale(1.1);  color: var(--accent-color);
+  transform: scale(1.1);
+  color: var(--accent-color);
 }
 
 .icon-btn :deep(svg) {
@@ -80,7 +81,7 @@ body.light-mode .sun-icon {
 
 .logo-text {
   font-family: var(--font-ui);
-  font-size: 1.3rem;
+  font-size: calc(1.3rem + 2pt);
   font-weight: 500;
   color: var(--text-primary);
 }
@@ -98,10 +99,12 @@ body.light-mode .sun-icon {
   place-items: center;
   background: none;
   border: none;
-  font-size: 1.2rem;
+  font-size: calc(1.2rem + 2pt);
   cursor: pointer;
   padding: 0;
-  transition: transform 0.2s ease, color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    color 0.2s ease;
   border-radius: 6px;
   color: var(--accent-color);
   color: var(--accent-hover);
@@ -132,7 +135,7 @@ body.light-mode .sun-icon {
   border: none;
   border-radius: 20px;
   font-family: var(--font-ui);
-  font-size: 1rem;
+  font-size: calc(1rem + 2pt);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -160,7 +163,7 @@ body.light-mode .sun-icon {
   }
 
   .logo-text {
-    font-size: 1.5rem;
+    font-size: calc(1.5rem + 2pt);
   }
 
   .toolbar-right {

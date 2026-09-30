@@ -170,7 +170,7 @@ const deleteTask = (taskId: string) => {
   margin: 0;
   color: var(--text-primary);
   font-family: var(--font-body);
-  font-size: 1.2rem;
+  font-size: calc(1.2rem + 2pt);
   font-weight: 400;
 }
 
@@ -180,7 +180,7 @@ const deleteTask = (taskId: string) => {
   gap: 0.5rem;
   color: var(--text-secondary);
   font-family: var(--font-body);
-  font-size: 0.78rem;
+  font-size: calc(0.78rem + 2pt);
 }
 
 .sort-control select {
@@ -191,7 +191,7 @@ const deleteTask = (taskId: string) => {
   background: var(--bg-tertiary);
   color: var(--text-primary);
   font-family: var(--font-body);
-  font-size: 0.85rem;
+  font-size: calc(0.85rem + 2pt);
 }
 
 .tasks-list {
@@ -220,7 +220,9 @@ const deleteTask = (taskId: string) => {
   border: 1px solid var(--border-color);
   background: var(--bg-secondary);
   border-radius: 999px;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .task-pill:hover {
@@ -243,7 +245,9 @@ const deleteTask = (taskId: string) => {
   background: transparent;
   color: #051515;
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .task-toggle.checked {
@@ -272,7 +276,7 @@ const deleteTask = (taskId: string) => {
   word-break: break-word;
   color: var(--text-primary);
   font-family: var(--font-body);
-  font-size: 0.9rem;
+  font-size: calc(0.9rem + 2pt);
 }
 
 .task-pill.completed .task-title {
@@ -293,17 +297,35 @@ const deleteTask = (taskId: string) => {
   border-radius: 999px;
   cursor: pointer;
   font-family: var(--font-ui);
-  font-size: 0.68rem;
+  font-size: calc(0.68rem + 2pt);
   font-weight: 500;
   text-transform: capitalize;
 }
 
-.priority-high { background: rgba(255, 140, 105, 0.18); color: #ff9b7f; }
-.priority-medium { background: rgba(233, 217, 133, 0.18); color: var(--accent-color); }
-.priority-low { background: rgba(79, 188, 174, 0.18); color: #71d0c4; }
-.progress-not-started { background: var(--bg-tertiary); color: var(--text-secondary); }
-.progress-in-progress { background: rgba(148, 174, 224, 0.18); color: #a9c0ef; }
-.progress-done { background: rgba(79, 188, 174, 0.14); color: #71d0c4; }
+.priority-high {
+  background: rgba(255, 140, 105, 0.18);
+  color: #ff9b7f;
+}
+.priority-medium {
+  background: rgba(233, 217, 133, 0.18);
+  color: var(--accent-color);
+}
+.priority-low {
+  background: rgba(79, 188, 174, 0.18);
+  color: #71d0c4;
+}
+.progress-not-started {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+.progress-in-progress {
+  background: rgba(148, 174, 224, 0.18);
+  color: #a9c0ef;
+}
+.progress-done {
+  background: rgba(79, 188, 174, 0.14);
+  color: #71d0c4;
+}
 
 body.light-mode .priority-high {
   background: #ffe1d8;
@@ -341,7 +363,7 @@ body.light-mode .progress-done {
   gap: 0.6rem;
   color: var(--text-primary);
   font-family: var(--font-body);
-  font-size: 0.85rem;
+  font-size: calc(0.85rem + 2pt);
 }
 
 .edit-repeat-toggle input {

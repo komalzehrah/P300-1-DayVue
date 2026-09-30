@@ -77,8 +77,8 @@ Generate a fake dataset as a JSON file (src/data/metrics.json).
 
 
 ## Style
--Use Google font Outfit Medium 500 as the logo and button font
--Use Google font Syne Regular 400 for all other type. 
+-Use Google font Syne Medium 500 as the logo and button font
+-Use Google font Outfit Regular 400 for all other type. 
 -Dark mode by default with a light/dark toggle button in the Settings drawer.
 -Use a color palette with a very dark teal, a very pale yellow for navigation buttons and tabs, and a bright peach for call to action buttons. Ensure that dark and light mode palettes work inversely and maintain accessibilty standards for color contrast.
 -Mobile-responsive, with cards stacking on top of each other in the dashboard view. 

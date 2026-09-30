@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, onBeforeUnmount, onMounted, ref, type Reactive } from 'vue'
+import { computed, inject, onBeforeUnmount, onMounted, ref, type Reactive, type Ref } from 'vue'
 import { Bar, Line } from 'vue-chartjs'
 import {
   BarElement,
@@ -15,8 +15,11 @@ import {
   type ChartOptions
 } from 'chart.js'
 import metrics from '@/data/metrics.json'
+import type { DatedHabit, DatedScheduleItem, DatedTask } from '@/data/fakeEntries'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler, Tooltip, Legend)
+ChartJS.defaults.font.family = 'Outfit, sans-serif'
+ChartJS.defaults.font.size = 14.67
 
 const isLightMode = ref(false)
 let themeObserver: MutationObserver | undefined
@@ -84,6 +87,9 @@ const dateRange = inject<Reactive<DashboardDateRange>>('dashboardDateRange', {
   startDate: '2026-03-01',
   endDate: '2026-07-31'
 })
+const scheduleItems = inject<Ref<DatedScheduleItem[]>>('scheduleItems', ref([]))
+const tasks = inject<Ref<DatedTask[]>>('tasks', ref([]))
+const habits = inject<Ref<DatedHabit[]>>('habits', ref([]))
 const habitSeries: Array<{ key: HabitKey; label: string }> = [
   { key: 'gym', label: 'Gym' },
   { key: 'meditation', label: 'Meditation' },
@@ -206,6 +212,107 @@ const dateRangeLabel = computed(() => {
   const startLabel = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   const endLabel = end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   return `${startLabel} - ${endLabel}`
+})
+
+const patternInsights = computed(() => {
+  const activityByDate = new Map<string, { events: number; tasks: number }>()
+  const getActivity = (date: string) => {
+    const activity = activityByDate.get(date) ?? { events: 0, tasks: 0 }
+    activityByDate.set(date, activity)
+    return activity
+  }
+
+  for (const item of scheduleItems.value) {
+    if (item.date < dateRange.startDate || item.date > dateRange.endDate) continue
+    getActivity(item.date).events += 1
+  }
+
+  for (const task of tasks.value) {
+    if (task.date < dateRange.startDate || task.date > dateRange.endDate) continue
+    getActivity(task.date).tasks += 1
+  }
+
+  const busiestDate = [...activityByDate.entries()]
+    .sort(([firstDate, first], [secondDate, second]) =>
+      second.events + second.tasks - first.events - first.tasks || firstDate.localeCompare(secondDate)
+    )[0]
+
+  let longestStreak = { days: 0, habit: '' }
+  let mostConsistent = { rate: -1, habit: '' }
+
+  for (const habit of habits.value) {
+    const activeStart = habit.startDate > dateRange.startDate ? habit.startDate : dateRange.startDate
+    const activeEnd = habit.endDate && habit.endDate < dateRange.endDate ? habit.endDate : dateRange.endDate
+    if (activeStart > activeEnd) continue
+
+    const loggedDates = [...new Set(habit.loggedDates.filter(date => date >= activeStart && date <= activeEnd))].sort()
+    let currentStreak = 0
+    let previousDate = ''
+
+    for (const date of loggedDates) {
+      const previousDay = previousDate ? parseDate(previousDate) : null
+      if (previousDay) previousDay.setDate(previousDay.getDate() + 1)
+      currentStreak = previousDay && dateString(previousDay) === date ? currentStreak + 1 : 1
+      if (currentStreak > longestStreak.days) longestStreak = { days: currentStreak, habit: habit.title }
+      previousDate = date
+    }
+
+    const activeStartDate = parseDate(activeStart)
+    const activeEndDate = parseDate(activeEnd)
+    const activeDays = Math.floor((Date.UTC(activeEndDate.getFullYear(), activeEndDate.getMonth(), activeEndDate.getDate())
+      - Date.UTC(activeStartDate.getFullYear(), activeStartDate.getMonth(), activeStartDate.getDate())) / 86_400_000) + 1
+    const frequencyCount = Math.max(1, habit.frequencyCount || 1)
+    let target = activeDays * frequencyCount
+
+    if (habit.frequencyUnit === 'week') {
+      const activeWeeks = new Set<string>()
+      for (const date = parseDate(activeStart); date <= parseDate(activeEnd); date.setDate(date.getDate() + 1)) {
+        const weekStart = new Date(date)
+        weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7))
+        activeWeeks.add(dateString(weekStart))
+      }
+      target = activeWeeks.size * frequencyCount
+    } else if (habit.frequencyUnit === 'month') {
+      const activeMonths = new Set<string>()
+      for (const date = parseDate(activeStart); date <= parseDate(activeEnd); date.setDate(date.getDate() + 1)) {
+        activeMonths.add(dateString(date).slice(0, 7))
+      }
+      target = activeMonths.size * frequencyCount
+    }
+
+    const rate = target ? Math.min(100, Math.round((loggedDates.length / target) * 100)) : 0
+    if (rate > mostConsistent.rate) mostConsistent = { rate, habit: habit.title }
+  }
+
+  const busiestDateLabel = busiestDate
+    ? new Date(`${busiestDate[0]}T12:00:00`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+    : 'No activity'
+
+  return {
+    items: [
+      {
+        label: 'Busiest day',
+        value: busiestDateLabel,
+        detail: busiestDate
+          ? `${busiestDate[1].events} calendar events · ${busiestDate[1].tasks} tasks`
+          : 'No events or tasks in this range'
+      },
+      {
+        label: 'Longest habit streak',
+        value: longestStreak.days ? `${longestStreak.days} ${longestStreak.days === 1 ? 'day' : 'days'}` : 'No streak yet',
+        detail: longestStreak.habit || 'No habit logs in this range'
+      },
+      {
+        label: 'Most consistent habit',
+        value: mostConsistent.habit ? `${mostConsistent.rate}%` : 'No active habits',
+        detail: mostConsistent.habit || 'No habits overlap this range'
+      }
+    ],
+    tips: [
+      'Pair a few minutes of sketching after a gym session to connect a less consistent habit to a routine you already keep.',
+      'On busy days, pick one high-priority task and spend 10 minutes on its first step to build momentum.'
+    ]
+  }
 })
 
 const habitRateForBucket = (bucket: ChartBucket, habit: HabitKey) => {
@@ -372,7 +479,6 @@ const scheduleChartOptions = computed<ChartOptions<'bar'>>(() => ({
   <div class="dashboard-page">
     <header class="dashboard-heading">
       <div>
-        <p class="dashboard-kicker">Overview</p>
         <h1>Recap</h1>
       </div>
     </header>
@@ -458,6 +564,27 @@ const scheduleChartOptions = computed<ChartOptions<'bar'>>(() => ({
           </span>
         </div>
       </article>
+
+      <article class="chart-panel insight-panel" aria-labelledby="pattern-insights-title">
+        <div class="panel-heading">
+          <div class="panel-copy">
+            <h2 id="pattern-insights-title">Highlights</h2>
+          </div>
+        </div>
+        <div class="pattern-grid">
+          <div v-for="insight in patternInsights.items" :key="insight.label" class="pattern-item">
+            <span class="pattern-label">{{ insight.label }}</span>
+            <strong class="pattern-value">{{ insight.value }}</strong>
+            <span class="pattern-detail">{{ insight.detail }}</span>
+          </div>
+        </div>
+        <div class="pattern-tips">
+          <h3>Try This</h3>
+          <ul class="pattern-tip-list">
+            <li v-for="tip in patternInsights.tips" :key="tip">{{ tip }}</li>
+          </ul>
+        </div>
+      </article>
     </section>
   </div>
 </template>
@@ -486,18 +613,10 @@ const scheduleChartOptions = computed<ChartOptions<'bar'>>(() => ({
   margin-bottom: 1.25rem;
 }
 
-.dashboard-kicker {
-  margin: 0 0 0.25rem;
-  color: var(--accent-color);
-  font-family: var(--font-ui);
-  font-size: 0.68rem;
-  font-weight: 500;
-}
-
 .dashboard-heading h1 {
   margin: 0;
   font-family: var(--font-body);
-  font-size: 1.65rem;
+  font-size: calc(1.65rem + 2pt);
   font-weight: 400;
 }
 
@@ -505,13 +624,13 @@ const scheduleChartOptions = computed<ChartOptions<'bar'>>(() => ({
   padding-bottom: 0.2rem;
   color: var(--text-secondary);
   font-family: var(--font-ui);
-  font-size: 0.8rem;
+  font-size: calc(0.8rem + 2pt);
   white-space: nowrap;
 }
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.75rem;
   margin-bottom: 1rem;
 }
@@ -532,13 +651,13 @@ const scheduleChartOptions = computed<ChartOptions<'bar'>>(() => ({
 .summary-label {
   color: var(--text-secondary);
   font-family: var(--font-body);
-  font-size: 0.78rem;
+  font-size: calc(0.78rem + 2pt);
 }
 
 .summary-item strong {
-  color: var(--text-primary);
+  color: var(--accent-color);
   font-family: var(--font-ui);
-  font-size: 1.8rem;
+  font-size: calc(1.8rem + 2pt);
   font-weight: 500;
   line-height: 1;
 }
@@ -546,13 +665,13 @@ const scheduleChartOptions = computed<ChartOptions<'bar'>>(() => ({
 .summary-item strong small {
   margin-left: 0.1rem;
   color: var(--accent-color);
-  font-size: 1rem;
+  font-size: calc(1rem + 2pt);
 }
 
 .summary-note {
   color: var(--text-secondary);
   font-family: var(--font-body);
-  font-size: 0.68rem;
+  font-size: calc(0.68rem + 2pt);
 }
 
 .dashboard-grid {
@@ -568,6 +687,87 @@ const scheduleChartOptions = computed<ChartOptions<'bar'>>(() => ({
   border: 1px solid var(--border-color);
   border-radius: 8px;
   background: var(--bg-secondary);
+}
+
+.insight-panel {
+  grid-column: 1 / -1;
+}
+
+.pattern-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.pattern-item {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.75rem 0;
+}
+
+.pattern-item + .pattern-item {
+  border-top: 1px solid var(--border-color);
+}
+
+.pattern-label,
+.pattern-detail {
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: calc(0.75rem + 2pt);
+}
+
+.pattern-value {
+  color: var(--accent-color);
+  font-family: var(--font-ui);
+  font-size: calc(1.1rem + 2pt);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.pattern-tips {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.pattern-tips h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: calc(0.8rem + 2pt);
+  font-weight: 500;
+}
+
+.pattern-tip-list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pattern-tip-list li {
+  position: relative;
+  padding-left: 1rem;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: calc(0.75rem + 2pt);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.pattern-tip-list li::before {
+  position: absolute;
+  top: 0.65em;
+  left: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  content: '';
 }
 
 .panel-heading {
@@ -588,14 +788,14 @@ const scheduleChartOptions = computed<ChartOptions<'bar'>>(() => ({
   margin: 0;
   color: var(--text-primary);
   font-family: var(--font-body);
-  font-size: 0.98rem;
+  font-size: calc(0.98rem + 2pt);
   font-weight: 400;
 }
 
 .panel-copy > span {
   color: var(--text-secondary);
   font-family: var(--font-body);
-  font-size: 0.68rem;
+  font-size: calc(0.68rem + 2pt);
 }
 
 .view-switch {
@@ -617,11 +817,11 @@ const scheduleChartOptions = computed<ChartOptions<'bar'>>(() => ({
   color: var(--text-secondary);
   cursor: pointer;
   font-family: var(--font-ui);
-  font-size: 0.65rem;
+  font-size: calc(0.65rem + 2pt);
   font-weight: 500;
 }
 
-.view-switch button[aria-pressed='true'] {
+.view-switch button[aria-pressed="true"] {
   background: var(--selected-surface);
   color: #051515;
 }
@@ -657,7 +857,7 @@ const scheduleChartOptions = computed<ChartOptions<'bar'>>(() => ({
   gap: 4px;
   color: var(--text-secondary);
   font-family: var(--font-body);
-  font-size: 0.68rem;
+  font-size: calc(0.68rem + 2pt);
 }
 
 .chart-legend-swatch {
@@ -693,6 +893,34 @@ const scheduleChartOptions = computed<ChartOptions<'bar'>>(() => ({
     padding: 1.25rem;
   }
 
+  .pattern-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .pattern-item {
+    padding: 0.25rem 1rem;
+  }
+
+  .pattern-item:first-child {
+    padding-left: 0;
+  }
+
+  .pattern-item + .pattern-item {
+    border-top: 0;
+    border-left: 1px solid var(--border-color);
+  }
+
+  .pattern-tips {
+    grid-template-columns: 110px minmax(0, 1fr);
+    align-items: start;
+    gap: 1rem;
+  }
+
+  .pattern-tip-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
   .habit-chart {
     height: 280px;
   }
@@ -723,7 +951,7 @@ const scheduleChartOptions = computed<ChartOptions<'bar'>>(() => ({
   }
 
   .summary-item strong {
-    font-size: 1.55rem;
+    font-size: calc(1.55rem + 2pt);
   }
 }
 </style>

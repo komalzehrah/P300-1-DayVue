@@ -99,7 +99,7 @@ type TabName = typeof tabs[number]['name']
   border: none;
   color: var(--text-secondary);
   font-family: var(--font-ui);
-  font-size: 0.9rem;
+  font-size: calc(0.9rem + 2pt);
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
@@ -140,7 +140,7 @@ type TabName = typeof tabs[number]['name']
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: #FF8C69;
+  background: #ff8c69;
   border: none;
   color: #051515;
   cursor: pointer;
@@ -150,7 +150,7 @@ type TabName = typeof tabs[number]['name']
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
   font-family: var(--font-ui);
-  font-size: 0.95rem;
+  font-size: calc(0.95rem + 2pt);
   font-weight: 500;
 }
 
@@ -181,7 +181,7 @@ type TabName = typeof tabs[number]['name']
 }
 
 .add-button:hover {
-  background: #FF7A52;
+  background: #ff7a52;
   transform: scale(1.1);
   box-shadow: 0 4px 12px rgba(255, 140, 105, 0.3);
 }
@@ -210,7 +210,7 @@ body.light-mode .tab.active {
   .tab {
     gap: 0.25rem;
     padding: 0.55rem 0.4rem;
-    font-size: 0.77rem;
+    font-size: calc(0.77rem + 2pt);
   }
 
   .tab-icon {
@@ -241,7 +241,7 @@ body.light-mode .tab.active {
   }
 
   .tab {
-    font-size: 0.95rem;
+    font-size: calc(0.95rem + 2pt);
   }
 
   .tab-label {
@@ -268,10 +268,12 @@ body.light-mode .tab.active {
     color: var(--text-secondary);
     cursor: pointer;
     font-family: var(--font-ui);
-    font-size: 0.95rem;
+    font-size: calc(0.95rem + 2pt);
     font-weight: 500;
     text-align: left;
-    transition: background 0.2s ease, color 0.2s ease;
+    transition:
+      background 0.2s ease,
+      color 0.2s ease;
   }
 
   .settings-button:hover,
@@ -317,7 +319,7 @@ body.light-mode .tab.active {
   .tab {
     gap: 0.25rem;
     padding: 0.5rem 0.4rem;
-    font-size: 0.77rem;
+    font-size: calc(0.77rem + 2pt);
   }
 
   .tab-container {
@@ -350,7 +352,7 @@ body.light-mode .tab.active {
   .tab {
     gap: 0.125rem;
     padding: 0.45rem 0.15rem;
-    font-size: 0.7rem;
+    font-size: calc(0.7rem + 2pt);
   }
 
   .tab-icon {
@@ -363,5 +365,4 @@ body.light-mode .tab.active {
     height: 36px;
   }
 }
-
 </style>
