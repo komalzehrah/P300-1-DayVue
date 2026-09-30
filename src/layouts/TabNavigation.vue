@@ -1,16 +1,17 @@
 <script setup lang="ts">
-import { CalendarIcon, CheckIcon, SparklesIcon, PlusIcon } from '@heroicons/vue/24/outline'
+import { HomeIcon, CalendarIcon, CheckIcon, SparklesIcon, PlusIcon } from '@heroicons/vue/24/outline'
 
 defineProps<{
-  selectedTab: 'Schedule' | 'Tasks' | 'Habits'
+  selectedTab: 'Dash' | 'Schedule' | 'Tasks' | 'Habits'
 }>()
 
 const emit = defineEmits<{
-  'select-tab': [tab: 'Schedule' | 'Tasks' | 'Habits']
+  'select-tab': [tab: 'Dash' | 'Schedule' | 'Tasks' | 'Habits']
   'toggle-add': []
 }>()
 
 const tabs = [
+  { name: 'Dash', icon: HomeIcon },
   { name: 'Schedule', icon: CalendarIcon },
   { name: 'Tasks', icon: CheckIcon },
   { name: 'Habits', icon: SparklesIcon }
@@ -36,6 +37,7 @@ type TabName = typeof tabs[number]['name']
     
     <button class="add-button" @click="$emit('toggle-add')" aria-label="Add Item">
       <PlusIcon />
+      <span class="add-label">Add item</span>
     </button>
   </nav>
 </template>
@@ -68,9 +70,9 @@ type TabName = typeof tabs[number]['name']
   background: transparent;
   border: none;
   color: var(--text-secondary);
-  font-family: 'Livvic', sans-serif;
+  font-family: var(--font-ui);
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
   border-radius: 20px;
@@ -115,6 +117,13 @@ type TabName = typeof tabs[number]['name']
   justify-content: center;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.add-label {
+  display: none;
 }
 
 .add-button :deep(svg) {
@@ -136,6 +145,112 @@ type TabName = typeof tabs[number]['name']
 body.light-mode .tab.active {
   background: #e9d985;
   box-shadow: 0 2px 8px rgba(233, 217, 133, 0.2);
+}
+
+@media (min-width: 451px) and (max-width: 767px) {
+  .tab-navigation {
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.75rem;
+  }
+
+  .tab-container {
+    gap: 0.125rem;
+    padding: 0.2rem;
+  }
+
+  .tab {
+    gap: 0.25rem;
+    padding: 0.55rem 0.4rem;
+    font-size: 0.77rem;
+  }
+
+  .tab-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .add-button {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .tab-navigation {
+    padding: 0.875rem 2rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .tab-navigation {
+    justify-content: flex-start;
+    padding: 1.25rem 0.75rem;
+  }
+
+  .tab-container {
+    gap: 0.35rem;
+  }
+
+  .tab {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 450px) {
+  .tab-navigation {
+    gap: 0.5rem;
+    padding-inline: 0.5rem;
+  }
+
+  .tab {
+    gap: 0.25rem;
+    padding: 0.5rem 0.4rem;
+    font-size: 0.77rem;
+  }
+
+  .tab-container {
+    gap: 0.125rem;
+    padding: 0.2rem;
+  }
+
+  .tab-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .add-button {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (max-width: 360px) {
+  .tab-navigation {
+    gap: 0.375rem;
+    padding-inline: 0.25rem;
+  }
+
+  .tab-container {
+    gap: 0.125rem;
+    padding: 0.2rem;
+  }
+
+  .tab {
+    gap: 0.125rem;
+    padding: 0.45rem 0.15rem;
+    font-size: 0.7rem;
+  }
+
+  .tab-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .add-button {
+    width: 36px;
+    height: 36px;
+  }
 }
 
 </style>

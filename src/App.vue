@@ -26,7 +26,7 @@ html, body, #app {
 body {
   background: var(--bg-primary);
   color: var(--text-primary);
-  font-family: 'Livvic', sans-serif;
+  font-family: var(--font-body);
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -39,7 +39,7 @@ body {
   --border-color: #0f2d2d;
   --accent-color: #e9d985;
   --accent-hover: #dcc968;
-  font-family: 'Livvic', sans-serif;
+  font-family: var(--font-body);
 }
 
 body.light-mode {

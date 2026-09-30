@@ -42,16 +42,22 @@ const addTask = (title: string) => {
 .tasks-container {
   padding: 1rem;
   overflow-y: auto;
-  height: calc(100vh - 140px);
+  height: 100%;
+  min-height: 0;
 }
 
 .tasks-list {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  min-height: 100%;
 }
 
 .empty-state {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   color: var(--text-secondary);
   padding: 2rem 1rem;
@@ -86,5 +92,34 @@ const addTask = (title: string) => {
 .task-item span.completed {
   text-decoration: line-through;
   color: var(--text-secondary);
+}
+
+@media (min-width: 481px) {
+  .tasks-container {
+    height: 100%;
+    padding: 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .tasks-container {
+    padding: 2rem;
+  }
+
+  .tasks-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .empty-state {
+    grid-column: 1 / -1;
+  }
+
+  .task-item {
+    min-height: 72px;
+  }
 }
 </style>

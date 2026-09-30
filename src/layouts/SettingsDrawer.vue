@@ -99,7 +99,7 @@ const toggleDarkMode = () => {
 }
 
 .drawer-header h2 {
-  font-family: 'Livvic', sans-serif;
+  font-family: var(--font-body);
   font-weight: 600;
   font-size: 1.2rem;
 }
@@ -149,7 +149,7 @@ const toggleDarkMode = () => {
 }
 
 .setting-title {
-  font-family: 'Livvic', sans-serif;
+  font-family: var(--font-body);
   font-weight: 600;
   color: var(--text-primary);
 }

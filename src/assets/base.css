@@ -17,9 +17,19 @@ body {
   height: 100%;
   margin: 0;
   padding: 0;
-  font-family: 'Livvic', sans-serif;
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+:root {
+  --font-ui: 'Outfit', sans-serif;
+  --font-body: 'Syne', sans-serif;
+}
+
+button {
+  font-family: var(--font-ui);
+  font-weight: 500;
 }
 
 #app {

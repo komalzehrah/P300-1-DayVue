@@ -1,0 +1,279 @@
+{
+  "dateRange": {
+    "start": "2026-03-01",
+    "end": "2026-07-31"
+  },
+  "persona": "A young professional working a hybrid corporate job and making room for health, friends, and family.",
+  "habitDataNote": "Each month's habit completedDays lists calendar day numbers completed. Every calendar day is tracked; an unlisted day is a miss.",
+  "months": [
+    {
+      "month": "2026-03",
+      "daysInMonth": 31,
+      "tasks": [
+        { "title": "Review top work priorities", "category": "work", "repeat": "daily", "completionRate": 0.87 },
+        { "title": "Clear urgent inbox follow-ups", "category": "work", "repeat": "daily", "completionRate": 0.78 },
+        { "title": "Reset kitchen before bed", "category": "home", "repeat": "daily", "completionRate": 0.68 },
+        { "title": "Submit March expense report", "category": "work", "repeat": "once", "dueDate": "2026-03-03", "status": "completed" },
+        { "title": "Book annual physical", "category": "health", "repeat": "once", "dueDate": "2026-03-04", "status": "completed" },
+        { "title": "Wash towels and sheets", "category": "home", "repeat": "once", "dueDate": "2026-03-05", "status": "completed" },
+        { "title": "Review campaign dashboard", "category": "work", "repeat": "once", "dueDate": "2026-03-06", "status": "completed" },
+        { "title": "Grocery shop and prep lunches", "category": "home", "repeat": "once", "dueDate": "2026-03-08", "status": "completed" },
+        { "title": "Dust desk and monitor", "category": "home", "repeat": "once", "dueDate": "2026-03-10", "status": "completed" },
+        { "title": "Send RSVP for Maya's engagement party", "category": "personal", "repeat": "once", "dueDate": "2026-03-11", "status": "completed" },
+        { "title": "Update project status notes", "category": "work", "repeat": "once", "dueDate": "2026-03-12", "status": "completed" },
+        { "title": "Return library books", "category": "home", "repeat": "once", "dueDate": "2026-03-14", "status": "completed" },
+        { "title": "Order cousin's birthday gift", "category": "personal", "repeat": "once", "dueDate": "2026-03-15", "status": "completed" },
+        { "title": "Clean bathroom", "category": "home", "repeat": "once", "dueDate": "2026-03-17", "status": "completed" },
+        { "title": "Draft Q2 campaign brief", "category": "work", "repeat": "once", "dueDate": "2026-03-19", "status": "completed" },
+        { "title": "Book haircut", "category": "personal", "repeat": "once", "dueDate": "2026-03-21", "status": "completed" },
+        { "title": "Plan meals for busy week", "category": "home", "repeat": "once", "dueDate": "2026-03-23", "status": "carried_over" },
+        { "title": "File receipts for taxes", "category": "personal", "repeat": "once", "dueDate": "2026-03-26", "status": "completed" },
+        { "title": "Vacuum living room", "category": "home", "repeat": "once", "dueDate": "2026-03-28", "status": "completed" },
+        { "title": "Write next week's work plan", "category": "work", "repeat": "once", "dueDate": "2026-03-30", "status": "completed" }
+      ],
+      "schedule": {
+        "workHours": { "daysOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "startTime": "09:00", "endTime": "17:00", "timeZone": "local", "workStyle": "Hybrid; usually in office Tuesday and Thursday" },
+        "recurringEvents": [
+          { "title": "Team stand-up", "daysOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "startTime": "09:30", "durationMinutes": 15, "category": "work" },
+          { "title": "Protected focus block", "daysOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday"], "startTime": "10:00", "durationMinutes": 90, "category": "work" },
+          { "title": "Lunch away from desk", "daysOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "startTime": "12:15", "durationMinutes": 45, "category": "health" },
+          { "title": "Campaign status sync", "daysOfWeek": ["Tuesday", "Thursday"], "startTime": "14:00", "durationMinutes": 30, "category": "work" },
+          { "title": "Weekly manager check-in", "daysOfWeek": ["Wednesday"], "startTime": "15:00", "durationMinutes": 30, "category": "work" },
+          { "title": "Plan next week", "daysOfWeek": ["Friday"], "startTime": "15:30", "durationMinutes": 30, "category": "work" }
+        ],
+        "events": [
+          { "date": "2026-03-05", "startTime": "14:30", "durationMinutes": 45, "title": "Q2 launch planning", "category": "work" },
+          { "date": "2026-03-07", "startTime": "18:30", "durationMinutes": 150, "title": "Maya's engagement party", "category": "social" },
+          { "date": "2026-03-11", "startTime": "16:00", "durationMinutes": 30, "title": "Quarterly check-in with manager", "category": "work" },
+          { "date": "2026-03-14", "startTime": "11:00", "durationMinutes": 120, "title": "Brunch for cousin's birthday", "category": "family" },
+          { "date": "2026-03-18", "startTime": "18:30", "durationMinutes": 60, "title": "Beginner pottery class", "category": "personal" },
+          { "date": "2026-03-20", "startTime": "15:00", "durationMinutes": 60, "title": "Campaign performance review", "category": "work" },
+          { "date": "2026-03-22", "startTime": "10:30", "durationMinutes": 90, "title": "Sunday walk with a friend", "category": "social" },
+          { "date": "2026-03-28", "startTime": "19:00", "durationMinutes": 180, "title": "Dinner with college friends", "category": "social" }
+        ]
+      },
+      "habits": {
+        "gym": { "target": "3 sessions per week", "completedDays": [2, 4, 7, 9, 11, 14, 16, 18, 21, 23, 26, 30] },
+        "meditation": { "target": "5 minutes daily", "completedDays": [1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 23, 25, 27, 29] },
+        "bedtimeBefore11pm": { "target": "In bed before 11:00 pm", "completedDays": [1, 2, 3, 5, 6, 8, 9, 10, 12, 13, 15, 16, 17, 19, 22, 24, 25, 27, 31] },
+        "sketchFor5Minutes": { "target": "Sketch for at least 5 minutes", "completedDays": [3, 6, 9, 12, 15, 18, 20, 24, 27, 30] }
+      }
+    },
+    {
+      "month": "2026-04",
+      "daysInMonth": 30,
+      "tasks": [
+        { "title": "Review top work priorities", "category": "work", "repeat": "daily", "completionRate": 0.84 },
+        { "title": "Clear urgent inbox follow-ups", "category": "work", "repeat": "daily", "completionRate": 0.75 },
+        { "title": "Reset kitchen before bed", "category": "home", "repeat": "daily", "completionRate": 0.64 },
+        { "title": "Submit April expense report", "category": "work", "repeat": "once", "dueDate": "2026-04-02", "status": "completed" },
+        { "title": "Refill prescriptions", "category": "health", "repeat": "once", "dueDate": "2026-04-03", "status": "completed" },
+        { "title": "Wash towels and sheets", "category": "home", "repeat": "once", "dueDate": "2026-04-04", "status": "completed" },
+        { "title": "Prepare monthly reporting deck", "category": "work", "repeat": "once", "dueDate": "2026-04-06", "status": "completed" },
+        { "title": "Grocery shop and prep lunches", "category": "home", "repeat": "once", "dueDate": "2026-04-08", "status": "completed" },
+        { "title": "Clean bathroom", "category": "home", "repeat": "once", "dueDate": "2026-04-10", "status": "completed" },
+        { "title": "Confirm headcount for sister's bridal shower", "category": "personal", "repeat": "once", "dueDate": "2026-04-11", "status": "completed" },
+        { "title": "Update project status notes", "category": "work", "repeat": "once", "dueDate": "2026-04-13", "status": "completed" },
+        { "title": "Return online order", "category": "home", "repeat": "once", "dueDate": "2026-04-14", "status": "completed" },
+        { "title": "Order bridal shower card and gift", "category": "personal", "repeat": "once", "dueDate": "2026-04-16", "status": "completed" },
+        { "title": "Dust desk and monitor", "category": "home", "repeat": "once", "dueDate": "2026-04-17", "status": "completed" },
+        { "title": "Proofread partner campaign copy", "category": "work", "repeat": "once", "dueDate": "2026-04-20", "status": "completed" },
+        { "title": "Book dentist appointment", "category": "health", "repeat": "once", "dueDate": "2026-04-21", "status": "carried_over" },
+        { "title": "Plan meals for busy week", "category": "home", "repeat": "once", "dueDate": "2026-04-23", "status": "completed" },
+        { "title": "Sort recycling and pantry shelf", "category": "home", "repeat": "once", "dueDate": "2026-04-25", "status": "completed" },
+        { "title": "Send thank-you notes", "category": "personal", "repeat": "once", "dueDate": "2026-04-27", "status": "carried_over" },
+        { "title": "Write next month's work plan", "category": "work", "repeat": "once", "dueDate": "2026-04-29", "status": "completed" }
+      ],
+      "schedule": {
+        "workHours": { "daysOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "startTime": "09:00", "endTime": "17:00", "timeZone": "local", "workStyle": "Hybrid; usually in office Tuesday and Thursday" },
+        "recurringEvents": [
+          { "title": "Team stand-up", "daysOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "startTime": "09:30", "durationMinutes": 15, "category": "work" },
+          { "title": "Protected focus block", "daysOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday"], "startTime": "10:00", "durationMinutes": 90, "category": "work" },
+          { "title": "Lunch away from desk", "daysOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "startTime": "12:15", "durationMinutes": 45, "category": "health" },
+          { "title": "Campaign status sync", "daysOfWeek": ["Tuesday", "Thursday"], "startTime": "14:00", "durationMinutes": 30, "category": "work" },
+          { "title": "Weekly manager check-in", "daysOfWeek": ["Wednesday"], "startTime": "15:00", "durationMinutes": 30, "category": "work" },
+          { "title": "Plan next week", "daysOfWeek": ["Friday"], "startTime": "15:30", "durationMinutes": 30, "category": "work" }
+        ],
+        "events": [
+          { "date": "2026-04-02", "startTime": "10:30", "durationMinutes": 45, "title": "Creative review for spring campaign", "category": "work" },
+          { "date": "2026-04-04", "startTime": "13:00", "durationMinutes": 180, "title": "Help set up sister's bridal shower", "category": "family" },
+          { "date": "2026-04-08", "startTime": "15:30", "durationMinutes": 45, "title": "Monthly performance dashboard review", "category": "work" },
+          { "date": "2026-04-11", "startTime": "12:00", "durationMinutes": 180, "title": "Sister's bridal shower", "category": "family" },
+          { "date": "2026-04-15", "startTime": "18:30", "durationMinutes": 60, "title": "Beginner pottery class", "category": "personal" },
+          { "date": "2026-04-18", "startTime": "10:00", "durationMinutes": 90, "title": "Farmers market with Nina", "category": "social" },
+          { "date": "2026-04-23", "startTime": "14:00", "durationMinutes": 60, "title": "Quarterly development conversation", "category": "work" },
+          { "date": "2026-04-25", "startTime": "18:00", "durationMinutes": 180, "title": "Dinner for Dad's birthday", "category": "family" },
+          { "date": "2026-04-29", "startTime": "19:00", "durationMinutes": 90, "title": "Easy neighborhood run with a friend", "category": "health" }
+        ]
+      },
+      "habits": {
+        "gym": { "target": "3 sessions per week", "completedDays": [1, 3, 6, 8, 10, 13, 15, 17, 20, 22, 25, 27] },
+        "meditation": { "target": "5 minutes daily", "completedDays": [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29] },
+        "bedtimeBefore11pm": { "target": "In bed before 11:00 pm", "completedDays": [1, 2, 4, 5, 7, 8, 9, 11, 12, 14, 15, 17, 18, 20, 21, 23, 26, 28, 30] },
+        "sketchFor5Minutes": { "target": "Sketch for at least 5 minutes", "completedDays": [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 30] }
+      }
+    },
+    {
+      "month": "2026-05",
+      "daysInMonth": 31,
+      "tasks": [
+        { "title": "Review top work priorities", "category": "work", "repeat": "daily", "completionRate": 0.89 },
+        { "title": "Clear urgent inbox follow-ups", "category": "work", "repeat": "daily", "completionRate": 0.81 },
+        { "title": "Reset kitchen before bed", "category": "home", "repeat": "daily", "completionRate": 0.71 },
+        { "title": "Submit May expense report", "category": "work", "repeat": "once", "dueDate": "2026-05-04", "status": "completed" },
+        { "title": "Wash towels and sheets", "category": "home", "repeat": "once", "dueDate": "2026-05-05", "status": "completed" },
+        { "title": "Prepare weekly client update", "category": "work", "repeat": "once", "dueDate": "2026-05-06", "status": "completed" },
+        { "title": "Grocery shop and prep lunches", "category": "home", "repeat": "once", "dueDate": "2026-05-09", "status": "completed" },
+        { "title": "Buy wedding gift for Priya and Sam", "category": "personal", "repeat": "once", "dueDate": "2026-05-08", "status": "completed" },
+        { "title": "Clean bathroom", "category": "home", "repeat": "once", "dueDate": "2026-05-11", "status": "completed" },
+        { "title": "Finalize campaign brief", "category": "work", "repeat": "once", "dueDate": "2026-05-12", "status": "completed" },
+        { "title": "Steam outfit for wedding weekend", "category": "personal", "repeat": "once", "dueDate": "2026-05-14", "status": "completed" },
+        { "title": "Update project status notes", "category": "work", "repeat": "once", "dueDate": "2026-05-15", "status": "completed" },
+        { "title": "Return library books", "category": "home", "repeat": "once", "dueDate": "2026-05-18", "status": "carried_over" },
+        { "title": "Vacuum living room", "category": "home", "repeat": "once", "dueDate": "2026-05-19", "status": "completed" },
+        { "title": "Book train for summer visit", "category": "personal", "repeat": "once", "dueDate": "2026-05-21", "status": "completed" },
+        { "title": "Review launch results with team", "category": "work", "repeat": "once", "dueDate": "2026-05-22", "status": "completed" },
+        { "title": "Plan meals for busy week", "category": "home", "repeat": "once", "dueDate": "2026-05-25", "status": "completed" },
+        { "title": "Replace water filter", "category": "home", "repeat": "once", "dueDate": "2026-05-27", "status": "carried_over" },
+        { "title": "Sort receipts and reimbursements", "category": "work", "repeat": "once", "dueDate": "2026-05-28", "status": "completed" },
+        { "title": "Write June work plan", "category": "work", "repeat": "once", "dueDate": "2026-05-29", "status": "completed" }
+      ],
+      "schedule": {
+        "workHours": { "daysOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "startTime": "09:00", "endTime": "17:00", "timeZone": "local", "workStyle": "Hybrid; usually in office Tuesday and Thursday" },
+        "recurringEvents": [
+          { "title": "Team stand-up", "daysOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "startTime": "09:30", "durationMinutes": 15, "category": "work" },
+          { "title": "Protected focus block", "daysOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday"], "startTime": "10:00", "durationMinutes": 90, "category": "work" },
+          { "title": "Lunch away from desk", "daysOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "startTime": "12:15", "durationMinutes": 45, "category": "health" },
+          { "title": "Campaign status sync", "daysOfWeek": ["Tuesday", "Thursday"], "startTime": "14:00", "durationMinutes": 30, "category": "work" },
+          { "title": "Weekly manager check-in", "daysOfWeek": ["Wednesday"], "startTime": "15:00", "durationMinutes": 30, "category": "work" },
+          { "title": "Plan next week", "daysOfWeek": ["Friday"], "startTime": "15:30", "durationMinutes": 30, "category": "work" }
+        ],
+        "events": [
+          { "date": "2026-05-01", "startTime": "14:00", "durationMinutes": 60, "title": "May campaign launch review", "category": "work" },
+          { "date": "2026-05-03", "startTime": "11:30", "durationMinutes": 120, "title": "Brunch with college friends", "category": "social" },
+          { "date": "2026-05-08", "startTime": "16:00", "durationMinutes": 45, "title": "Finalize wedding coverage with teammate", "category": "work" },
+          { "date": "2026-05-09", "startTime": "15:00", "durationMinutes": 240, "title": "Priya and Sam's wedding ceremony", "category": "social" },
+          { "date": "2026-05-13", "startTime": "18:30", "durationMinutes": 60, "title": "Beginner pottery class", "category": "personal" },
+          { "date": "2026-05-17", "startTime": "10:00", "durationMinutes": 90, "title": "Easy long walk and coffee", "category": "health" },
+          { "date": "2026-05-20", "startTime": "13:00", "durationMinutes": 60, "title": "Midyear goals discussion", "category": "work" },
+          { "date": "2026-05-23", "startTime": "18:00", "durationMinutes": 180, "title": "Dinner with wedding guests", "category": "social" },
+          { "date": "2026-05-31", "startTime": "12:00", "durationMinutes": 150, "title": "Family lunch for Mom's birthday", "category": "family" }
+        ]
+      },
+      "habits": {
+        "gym": { "target": "3 sessions per week", "completedDays": [1, 4, 6, 8, 11, 13, 15, 18, 20, 22, 25, 27, 29, 31] },
+        "meditation": { "target": "5 minutes daily", "completedDays": [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31] },
+        "bedtimeBefore11pm": { "target": "In bed before 11:00 pm", "completedDays": [1, 2, 4, 5, 6, 8, 9, 11, 12, 14, 15, 17, 18, 20, 21, 23, 24, 26, 28, 30] },
+        "sketchFor5Minutes": { "target": "Sketch for at least 5 minutes", "completedDays": [2, 5, 8, 11, 14, 17, 20, 22, 24, 27, 30, 31] }
+      }
+    },
+    {
+      "month": "2026-06",
+      "daysInMonth": 30,
+      "tasks": [
+        { "title": "Review top work priorities", "category": "work", "repeat": "daily", "completionRate": 0.85 },
+        { "title": "Clear urgent inbox follow-ups", "category": "work", "repeat": "daily", "completionRate": 0.76 },
+        { "title": "Reset kitchen before bed", "category": "home", "repeat": "daily", "completionRate": 0.66 },
+        { "title": "Submit June expense report", "category": "work", "repeat": "once", "dueDate": "2026-06-02", "status": "completed" },
+        { "title": "Wash towels and sheets", "category": "home", "repeat": "once", "dueDate": "2026-06-03", "status": "completed" },
+        { "title": "Schedule midyear project check-in", "category": "work", "repeat": "once", "dueDate": "2026-06-04", "status": "completed" },
+        { "title": "Grocery shop and prep lunches", "category": "home", "repeat": "once", "dueDate": "2026-06-06", "status": "completed" },
+        { "title": "Order graduation card and gift", "category": "personal", "repeat": "once", "dueDate": "2026-06-08", "status": "completed" },
+        { "title": "Clean bathroom", "category": "home", "repeat": "once", "dueDate": "2026-06-09", "status": "completed" },
+        { "title": "Refresh campaign reporting sheet", "category": "work", "repeat": "once", "dueDate": "2026-06-10", "status": "completed" },
+        { "title": "Book physical therapy follow-up", "category": "health", "repeat": "once", "dueDate": "2026-06-12", "status": "carried_over" },
+        { "title": "Update project status notes", "category": "work", "repeat": "once", "dueDate": "2026-06-15", "status": "completed" },
+        { "title": "Return borrowed serving dish", "category": "home", "repeat": "once", "dueDate": "2026-06-16", "status": "completed" },
+        { "title": "Vacuum living room", "category": "home", "repeat": "once", "dueDate": "2026-06-18", "status": "completed" },
+        { "title": "Confirm family Father's Day lunch", "category": "personal", "repeat": "once", "dueDate": "2026-06-19", "status": "completed" },
+        { "title": "Send client recap and next steps", "category": "work", "repeat": "once", "dueDate": "2026-06-22", "status": "completed" },
+        { "title": "Plan meals for busy week", "category": "home", "repeat": "once", "dueDate": "2026-06-24", "status": "carried_over" },
+        { "title": "Sort closet for summer", "category": "home", "repeat": "once", "dueDate": "2026-06-26", "status": "completed" },
+        { "title": "Book train for July weekend", "category": "personal", "repeat": "once", "dueDate": "2026-06-27", "status": "completed" },
+        { "title": "Write July work plan", "category": "work", "repeat": "once", "dueDate": "2026-06-30", "status": "completed" }
+      ],
+      "schedule": {
+        "workHours": { "daysOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "startTime": "09:00", "endTime": "17:00", "timeZone": "local", "workStyle": "Hybrid; usually in office Tuesday and Thursday" },
+        "recurringEvents": [
+          { "title": "Team stand-up", "daysOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "startTime": "09:30", "durationMinutes": 15, "category": "work" },
+          { "title": "Protected focus block", "daysOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday"], "startTime": "10:00", "durationMinutes": 90, "category": "work" },
+          { "title": "Lunch away from desk", "daysOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "startTime": "12:15", "durationMinutes": 45, "category": "health" },
+          { "title": "Campaign status sync", "daysOfWeek": ["Tuesday", "Thursday"], "startTime": "14:00", "durationMinutes": 30, "category": "work" },
+          { "title": "Weekly manager check-in", "daysOfWeek": ["Wednesday"], "startTime": "15:00", "durationMinutes": 30, "category": "work" },
+          { "title": "Plan next week", "daysOfWeek": ["Friday"], "startTime": "15:30", "durationMinutes": 30, "category": "work" }
+        ],
+        "events": [
+          { "date": "2026-06-02", "startTime": "11:00", "durationMinutes": 60, "title": "Midyear campaign readout", "category": "work" },
+          { "date": "2026-06-06", "startTime": "17:30", "durationMinutes": 180, "title": "Dinner with friends from the gym", "category": "social" },
+          { "date": "2026-06-10", "startTime": "14:30", "durationMinutes": 45, "title": "Midyear review with manager", "category": "work" },
+          { "date": "2026-06-13", "startTime": "13:00", "durationMinutes": 180, "title": "Cousin's college graduation", "category": "family" },
+          { "date": "2026-06-17", "startTime": "18:30", "durationMinutes": 60, "title": "Beginner pottery class", "category": "personal" },
+          { "date": "2026-06-21", "startTime": "12:00", "durationMinutes": 180, "title": "Father's Day lunch with family", "category": "family" },
+          { "date": "2026-06-24", "startTime": "15:00", "durationMinutes": 60, "title": "Q3 planning session", "category": "work" },
+          { "date": "2026-06-26", "startTime": "19:00", "durationMinutes": 150, "title": "Movie night with Nina", "category": "social" },
+          { "date": "2026-06-28", "startTime": "09:30", "durationMinutes": 90, "title": "Easy bike ride on the trail", "category": "health" }
+        ]
+      },
+      "habits": {
+        "gym": { "target": "3 sessions per week", "completedDays": [1, 3, 5, 8, 10, 12, 15, 17, 19, 22, 24, 26] },
+        "meditation": { "target": "5 minutes daily", "completedDays": [1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28] },
+        "bedtimeBefore11pm": { "target": "In bed before 11:00 pm", "completedDays": [1, 3, 4, 6, 7, 9, 10, 12, 13, 15, 16, 18, 19, 21, 22, 24, 25, 27, 29] },
+        "sketchFor5Minutes": { "target": "Sketch for at least 5 minutes", "completedDays": [2, 5, 8, 11, 14, 17, 20, 23, 26] }
+      }
+    },
+    {
+      "month": "2026-07",
+      "daysInMonth": 31,
+      "tasks": [
+        { "title": "Review top work priorities", "category": "work", "repeat": "daily", "completionRate": 0.88 },
+        { "title": "Clear urgent inbox follow-ups", "category": "work", "repeat": "daily", "completionRate": 0.79 },
+        { "title": "Reset kitchen before bed", "category": "home", "repeat": "daily", "completionRate": 0.69 },
+        { "title": "Submit July expense report", "category": "work", "repeat": "once", "dueDate": "2026-07-02", "status": "completed" },
+        { "title": "Wash towels and sheets", "category": "home", "repeat": "once", "dueDate": "2026-07-03", "status": "completed" },
+        { "title": "Finalize Q3 channel plan", "category": "work", "repeat": "once", "dueDate": "2026-07-06", "status": "completed" },
+        { "title": "Grocery shop and prep lunches", "category": "home", "repeat": "once", "dueDate": "2026-07-07", "status": "completed" },
+        { "title": "Send moving-day check-in to cousin", "category": "personal", "repeat": "once", "dueDate": "2026-07-08", "status": "completed" },
+        { "title": "Clean bathroom", "category": "home", "repeat": "once", "dueDate": "2026-07-10", "status": "completed" },
+        { "title": "Update project status notes", "category": "work", "repeat": "once", "dueDate": "2026-07-13", "status": "completed" },
+        { "title": "Return library books", "category": "home", "repeat": "once", "dueDate": "2026-07-14", "status": "carried_over" },
+        { "title": "Order housewarming gift", "category": "personal", "repeat": "once", "dueDate": "2026-07-15", "status": "completed" },
+        { "title": "Dust desk and monitor", "category": "home", "repeat": "once", "dueDate": "2026-07-17", "status": "completed" },
+        { "title": "Share campaign results with stakeholders", "category": "work", "repeat": "once", "dueDate": "2026-07-20", "status": "completed" },
+        { "title": "Plan meals for busy week", "category": "home", "repeat": "once", "dueDate": "2026-07-21", "status": "completed" },
+        { "title": "Reserve table for family anniversary dinner", "category": "personal", "repeat": "once", "dueDate": "2026-07-23", "status": "completed" },
+        { "title": "Vacuum living room", "category": "home", "repeat": "once", "dueDate": "2026-07-25", "status": "completed" },
+        { "title": "Sort receipts and reimbursements", "category": "work", "repeat": "once", "dueDate": "2026-07-27", "status": "carried_over" },
+        { "title": "Replace bathroom light bulb", "category": "home", "repeat": "once", "dueDate": "2026-07-29", "status": "completed" },
+        { "title": "Write August work plan", "category": "work", "repeat": "once", "dueDate": "2026-07-31", "status": "completed" }
+      ],
+      "schedule": {
+        "workHours": { "daysOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "startTime": "09:00", "endTime": "17:00", "timeZone": "local", "workStyle": "Hybrid; usually in office Tuesday and Thursday" },
+        "recurringEvents": [
+          { "title": "Team stand-up", "daysOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "startTime": "09:30", "durationMinutes": 15, "category": "work" },
+          { "title": "Protected focus block", "daysOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday"], "startTime": "10:00", "durationMinutes": 90, "category": "work" },
+          { "title": "Lunch away from desk", "daysOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "startTime": "12:15", "durationMinutes": 45, "category": "health" },
+          { "title": "Campaign status sync", "daysOfWeek": ["Tuesday", "Thursday"], "startTime": "14:00", "durationMinutes": 30, "category": "work" },
+          { "title": "Weekly manager check-in", "daysOfWeek": ["Wednesday"], "startTime": "15:00", "durationMinutes": 30, "category": "work" },
+          { "title": "Plan next week", "daysOfWeek": ["Friday"], "startTime": "15:30", "durationMinutes": 30, "category": "work" }
+        ],
+        "events": [
+          { "date": "2026-07-02", "startTime": "13:30", "durationMinutes": 60, "title": "Q3 campaign kickoff", "category": "work" },
+          { "date": "2026-07-04", "startTime": "17:00", "durationMinutes": 180, "title": "Fourth of July cookout with friends", "category": "social" },
+          { "date": "2026-07-08", "startTime": "15:00", "durationMinutes": 45, "title": "Monthly performance check-in", "category": "work" },
+          { "date": "2026-07-11", "startTime": "10:30", "durationMinutes": 120, "title": "Help cousin unpack after moving", "category": "family" },
+          { "date": "2026-07-15", "startTime": "18:30", "durationMinutes": 60, "title": "Beginner pottery class", "category": "personal" },
+          { "date": "2026-07-18", "startTime": "16:00", "durationMinutes": 180, "title": "Housewarming for cousin and Alex", "category": "family" },
+          { "date": "2026-07-22", "startTime": "14:00", "durationMinutes": 60, "title": "Q3 stakeholder review", "category": "work" },
+          { "date": "2026-07-25", "startTime": "09:00", "durationMinutes": 120, "title": "Yoga class and coffee with Nina", "category": "health" },
+          { "date": "2026-07-30", "startTime": "19:00", "durationMinutes": 150, "title": "Family anniversary dinner", "category": "family" }
+        ]
+      },
+      "habits": {
+        "gym": { "target": "3 sessions per week", "completedDays": [2, 4, 7, 9, 11, 14, 16, 18, 21, 23, 26, 28, 30] },
+        "meditation": { "target": "5 minutes daily", "completedDays": [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29] },
+        "bedtimeBefore11pm": { "target": "In bed before 11:00 pm", "completedDays": [1, 2, 4, 5, 7, 8, 10, 11, 13, 14, 16, 17, 19, 20, 22, 24, 25, 27, 29, 31] },
+        "sketchFor5Minutes": { "target": "Sketch for at least 5 minutes", "completedDays": [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 31] }
+      }
+    }
+  ]
+}

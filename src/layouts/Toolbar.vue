@@ -83,9 +83,9 @@ defineProps<{
 }
 
 .logo-text {
-  font-family: 'Livvic', sans-serif;
+  font-family: var(--font-ui);
   font-size: 1.3rem;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-primary);
 }
 
@@ -124,9 +124,9 @@ defineProps<{
   color: #000;
   border: none;
   border-radius: 20px;
-  font-family: 'Livvic', sans-serif;
+  font-family: var(--font-ui);
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -139,5 +139,31 @@ defineProps<{
 
 .add-btn:active {
   transform: translateY(0);
+}
+
+@media (min-width: 481px) {
+  .toolbar {
+    height: 68px;
+    padding: 0 1.5rem;
+  }
+
+  .sun-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .logo-text {
+    font-size: 1.5rem;
+  }
+
+  .toolbar-right {
+    gap: 0.75rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .toolbar {
+    padding: 0 2rem;
+  }
 }
 </style>

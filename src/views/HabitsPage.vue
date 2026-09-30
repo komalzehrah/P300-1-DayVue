@@ -46,16 +46,22 @@ const addHabit = (title: string, frequency: string) => {
 .habits-container {
   padding: 1rem;
   overflow-y: auto;
-  height: calc(100vh - 140px);
+  height: 100%;
+  min-height: 0;
 }
 
 .habits-list {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  min-height: 100%;
 }
 
 .empty-state {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   color: var(--text-secondary);
   padding: 2rem 1rem;
@@ -102,5 +108,34 @@ const addHabit = (title: string, frequency: string) => {
 .habit-info small {
   color: var(--text-secondary);
   font-size: 0.8rem;
+}
+
+@media (min-width: 481px) {
+  .habits-container {
+    height: 100%;
+    padding: 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .habits-container {
+    padding: 2rem;
+  }
+
+  .habits-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .empty-state {
+    grid-column: 1 / -1;
+  }
+
+  .habit-item {
+    min-height: 84px;
+  }
 }
 </style>

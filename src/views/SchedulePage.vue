@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, inject } from 'vue'
-import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
+import { ref, computed, inject, type Ref } from 'vue'
 
 interface ScheduleItem {
   id: string
@@ -12,13 +11,89 @@ interface ScheduleItem {
   color?: string
 }
 
+type CalendarView = 'daily' | 'weekly' | 'monthly'
+
 const scheduleItems = inject<any>('scheduleItems', ref<ScheduleItem[]>([]))
 const items = computed(() => scheduleItems.value || [])
-const selectedDate = ref<string>(new Date().toISOString().split('T')[0])
-const showDatePicker = ref(false)
-const pickerDate = ref<Date>(new Date(selectedDate.value))
+const today = new Date()
+const selectedDate = inject<Ref<string>>(
+  'selectedDate',
+  ref(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`)
+)
+const calendarView = ref<CalendarView>('daily')
 const showEditModal = ref(false)
 const selectedItem = ref<ScheduleItem | null>(null)
+const calendarViews: Array<{ id: CalendarView; label: string }> = [
+  { id: 'daily', label: 'Daily' },
+  { id: 'weekly', label: 'Weekly' },
+  { id: 'monthly', label: 'Monthly' }
+]
+
+const parseDate = (value: string) => {
+  const [year = 1970, month = 1, day = 1] = value.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
+
+const formatDate = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+
+const weekDays = computed(() => {
+  const firstDay = parseDate(selectedDate.value)
+  firstDay.setDate(firstDay.getDate() - firstDay.getDay())
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(firstDay)
+    date.setDate(firstDay.getDate() + index)
+    return date
+  })
+})
+
+const monthDays = computed(() => {
+  const selected = parseDate(selectedDate.value)
+  const firstDay = new Date(selected.getFullYear(), selected.getMonth(), 1)
+  const daysInMonth = new Date(selected.getFullYear(), selected.getMonth() + 1, 0).getDate()
+  const days: Array<Date | null> = Array(firstDay.getDay()).fill(null)
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    days.push(new Date(selected.getFullYear(), selected.getMonth(), day))
+  }
+
+  return days
+})
+
+const calendarPeriod = computed(() => {
+  if (calendarView.value === 'weekly') {
+    const firstDay = weekDays.value[0]
+    const lastDay = weekDays.value[6]
+    if (!firstDay || !lastDay) return ''
+    return `${firstDay.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${lastDay.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+  }
+
+  const selected = parseDate(selectedDate.value)
+  return selected.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+})
+
+const isSelectedDate = (date: Date) => formatDate(date) === selectedDate.value
+
+const selectCalendarDate = (date: Date) => {
+  selectedDate.value = formatDate(date)
+}
+
+const itemsForDate = (date: Date) => items.value.filter((item: ScheduleItem) => {
+  const frequency = (item.frequency || 'daily').toLowerCase()
+  if (frequency === 'weekly') {
+    return date.getDay() === parseDate(selectedDate.value).getDay()
+  }
+  if (frequency === 'monthly') {
+    return date.getDate() === parseDate(selectedDate.value).getDate()
+  }
+  return true
+})
+
+const formatTime = (time: string) => {
+  const [hours = 0, minutes = 0] = time.split(':').map(Number)
+  const period = hours < 12 ? 'AM' : 'PM'
+  return `${hours % 12 || 12}:${String(minutes).padStart(2, '0')} ${period}`
+}
 
 const hourLabels = computed(() => {
   const labels = []
@@ -48,70 +123,6 @@ const timeSlots = computed(() => {
   }
   return slots
 })
-
-const currentDateDisplay = computed(() => {
-  const date = new Date(selectedDate.value)
-  const dayName = date.toLocaleDateString('en-US', { weekday: 'long' })
-  const month = date.toLocaleDateString('en-US', { month: 'long' })
-  const day = date.getDate()
-  const year = date.getFullYear()
-  return { dayName, month, day, year }
-})
-
-const pickerMonthYear = computed(() => {
-  return pickerDate.value.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-})
-
-const calendarDays = computed(() => {
-  const year = pickerDate.value.getFullYear()
-  const month = pickerDate.value.getMonth()
-  const firstDay = new Date(year, month, 1)
-  const lastDay = new Date(year, month + 1, 0)
-  const daysInMonth = lastDay.getDate()
-  const startingDayOfWeek = firstDay.getDay()
-  
-  const days = []
-  
-  // Empty days for days before month starts
-  for (let i = 0; i < startingDayOfWeek; i++) {
-    days.push(null)
-  }
-  
-  // Days in the month
-  for (let day = 1; day <= daysInMonth; day++) {
-    days.push(new Date(year, month, day))
-  }
-  
-  return days
-})
-
-const openDatePicker = () => {
-  pickerDate.value = new Date(selectedDate.value)
-  showDatePicker.value = true
-}
-
-const closeDatePicker = () => {
-  showDatePicker.value = false
-}
-
-const previousMonth = () => {
-  pickerDate.value = new Date(pickerDate.value.getFullYear(), pickerDate.value.getMonth() - 1)
-}
-
-const nextMonth = () => {
-  pickerDate.value = new Date(pickerDate.value.getFullYear(), pickerDate.value.getMonth() + 1)
-}
-
-const selectDate = (date: Date) => {
-  selectedDate.value = date.toISOString().split('T')[0]
-  showDatePicker.value = false
-}
-
-const isSelected = (date: Date | null) => {
-  if (!date) return false
-  const dateStr = date.toISOString().split('T')[0]
-  return dateStr === selectedDate.value
-}
 
 const getItemStyle = (item: ScheduleItem) => {
   const [hours, minutes] = item.time.split(':').map(Number)
@@ -156,20 +167,23 @@ const deleteItem = (itemId: string) => {
 
 <template>
   <div class="schedule-container">
-    <div class="date-header">
-      <div class="date-display">
-        <span class="date-text">
-          {{ currentDateDisplay.dayName }}
-          <span class="date-highlight">{{ currentDateDisplay.month }} {{ currentDateDisplay.day }}</span>
-          {{ currentDateDisplay.year }}
-        </span>
-        <button class="date-picker-btn" @click="openDatePicker" aria-label="Select date">
-          <CalendarIcon />
+    <div class="calendar-toolbar">
+      <div class="calendar-view-switch" role="group" aria-label="Calendar view">
+        <button
+          v-for="view in calendarViews"
+          :key="view.id"
+          class="view-option"
+          :class="{ active: calendarView === view.id }"
+          :aria-pressed="calendarView === view.id"
+          @click="calendarView = view.id"
+        >
+          {{ view.label }}
         </button>
       </div>
+      <span v-if="calendarView !== 'daily'" class="calendar-period">{{ calendarPeriod }}</span>
     </div>
 
-    <div class="calendar-wrapper">
+    <div v-if="calendarView === 'daily'" class="calendar-wrapper">
       <div class="time-labels">
         <div class="label-spacer"></div>
         <div v-for="(label, i) in hourLabels" :key="i" class="hour-label">
@@ -204,46 +218,67 @@ const deleteItem = (itemId: string) => {
       </div>
     </div>
 
-    <!-- Date Picker Modal -->
-    <div v-if="showDatePicker" class="date-picker-backdrop" @click="closeDatePicker" />
-    <div v-if="showDatePicker" class="date-picker-modal">
-      <div class="date-picker-header">
-        <button class="nav-btn" @click="previousMonth">
-          <ChevronLeftIcon />
-        </button>
-        <h3 class="month-year">{{ pickerMonthYear }}</h3>
-        <button class="nav-btn" @click="nextMonth">
-          <ChevronRightIcon />
-        </button>
-      </div>
-      
-      <div class="calendar-grid">
-        <div class="weekday-header">Sun</div>
-        <div class="weekday-header">Mon</div>
-        <div class="weekday-header">Tue</div>
-        <div class="weekday-header">Wed</div>
-        <div class="weekday-header">Thu</div>
-        <div class="weekday-header">Fri</div>
-        <div class="weekday-header">Sat</div>
-        
+    <div v-else-if="calendarView === 'weekly'" class="week-grid">
+      <section v-for="day in weekDays" :key="formatDate(day)" class="week-day">
         <button
-          v-for="(day, i) in calendarDays"
-          :key="i"
-          :class="{
-            'calendar-day': true,
-            'empty': !day,
-            'selected': isSelected(day),
-            'other-month': false
-          }"
-          @click="day && selectDate(day)"
-          :disabled="!day"
+          class="week-day-heading"
+          :class="{ selected: isSelectedDate(day) }"
+          @click="selectCalendarDate(day)"
         >
-          {{ day ? day.getDate() : '' }}
+          <span>{{ day.toLocaleDateString('en-US', { weekday: 'short' }) }}</span>
+          <strong>{{ day.getDate() }}</strong>
         </button>
-      </div>
+        <div class="week-day-events">
+          <button
+            v-for="item in itemsForDate(day)"
+            :key="item.id"
+            class="week-event"
+            :style="{ '--event-color': item.color || 'var(--accent-color)' }"
+            @click="openEditModal(item)"
+          >
+            <time>{{ formatTime(item.time) }}</time>
+            <span>{{ item.title }}</span>
+          </button>
+          <span v-if="itemsForDate(day).length === 0" class="no-events">No items</span>
+        </div>
+      </section>
+    </div>
 
-      <div class="date-picker-footer">
-        <button class="cancel-btn" @click="closeDatePicker">Cancel</button>
+    <div v-else class="month-grid">
+      <div v-for="day in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" :key="day" class="month-weekday">
+        {{ day }}
+      </div>
+      <div
+        v-for="(day, index) in monthDays"
+        :key="index"
+        class="month-cell"
+        :class="{ empty: !day, selected: day && isSelectedDate(day) }"
+      >
+        <button
+          v-if="day"
+          class="month-date"
+          :class="{ selected: isSelectedDate(day) }"
+          @click="selectCalendarDate(day)"
+        >
+          {{ day.getDate() }}
+        </button>
+        <div v-if="day" class="month-events">
+          <button
+            v-for="item in itemsForDate(day).slice(0, 3)"
+            :key="item.id"
+            class="month-event"
+            :style="{ '--event-color': item.color || 'var(--accent-color)' }"
+            :title="`${formatTime(item.time)} ${item.title}`"
+            @click="openEditModal(item)"
+          >
+            <span class="month-event-time">{{ formatTime(item.time) }}</span>
+            <span class="month-event-title">{{ item.title }}</span>
+            <span class="month-event-dot" aria-hidden="true" />
+          </button>
+          <span v-if="itemsForDate(day).length > 3" class="more-events">
+            +{{ itemsForDate(day).length - 3 }} more
+          </span>
+        </div>
       </div>
     </div>
 
@@ -307,8 +342,243 @@ const deleteItem = (itemId: string) => {
   background: var(--bg-primary);
 }
 
+.calendar-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.calendar-view-switch {
+  grid-column: 2;
+  grid-row: 1;
+  display: inline-flex;
+  gap: 0.2rem;
+  padding: 0.125rem;
+  border: 1px solid var(--border-color);
+  border-radius: 9px;
+  background: var(--bg-secondary);
+}
+
+.view-option {
+  min-height: 30px;
+  padding: 0.25rem 0.7rem;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.view-option:hover {
+  color: var(--text-primary);
+}
+
+.view-option.active {
+  background: var(--accent-color);
+  color: #000;
+}
+
+.calendar-period {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  text-align: right;
+}
+
+.week-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.6rem;
+}
+
+.week-day {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+}
+
+.week-day-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  border: 0;
+  border-right: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+.week-day-heading strong {
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.week-day-heading.selected,
+.week-day-heading.selected strong {
+  background: var(--accent-color);
+  color: #000;
+}
+
+.week-day-events {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.5rem;
+}
+
+.week-event {
+  display: grid;
+  grid-template-columns: 66px minmax(0, 1fr);
+  gap: 0.5rem;
+  align-items: center;
+  min-height: 36px;
+  padding: 0.4rem 0.5rem;
+  border: 0;
+  border-left: 3px solid var(--event-color);
+  border-radius: 4px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  text-align: left;
+}
+
+.week-event time {
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.week-event span {
+  overflow-wrap: anywhere;
+}
+
+.no-events {
+  padding: 0.4rem 0.5rem;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--border-color);
+}
+
+.month-weekday {
+  padding: 0.55rem 0.2rem;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.month-cell {
+  min-width: 0;
+  min-height: 84px;
+  padding: 0.35rem;
+  background: var(--bg-secondary);
+}
+
+.month-cell.empty {
+  background: var(--bg-primary);
+}
+
+.month-date {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.month-date.selected {
+  background: var(--accent-color);
+  color: #000;
+}
+
+.month-events {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-top: 0.25rem;
+}
+
+.month-event {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 0.2rem;
+  min-width: 0;
+  padding: 0.2rem 0.25rem;
+  overflow: hidden;
+  border: 0;
+  border-left: 2px solid var(--event-color);
+  border-radius: 3px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 0.65rem;
+  text-align: left;
+}
+
+.month-event-time,
+.month-event-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.month-event-time {
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+}
+
+.more-events {
+  color: var(--text-secondary);
+  font-size: 0.62rem;
+}
+
 .date-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   padding: 0 0 1.5rem 0;
+  background: var(--bg-primary);
 }
 
 .date-display {
@@ -320,7 +590,7 @@ const deleteItem = (itemId: string) => {
 }
 
 .date-text {
-  font-family: 'Livvic', sans-serif;
+  font-family: var(--font-body);
   font-size: 1rem;
   font-weight: 500;
   color: var(--text-primary);
@@ -333,7 +603,7 @@ const deleteItem = (itemId: string) => {
 }
 
 .day-name {
-  font-family: 'Livvic', sans-serif;
+  font-family: var(--font-body);
   font-size: 1rem;
   font-weight: 500;
   color: var(--text-primary);
@@ -341,7 +611,7 @@ const deleteItem = (itemId: string) => {
 }
 
 .date-value {
-  font-family: 'Livvic', sans-serif;
+  font-family: var(--font-body);
   font-size: 1rem;
   font-weight: 500;
   color: var(--text-secondary);
@@ -404,7 +674,7 @@ const deleteItem = (itemId: string) => {
 }
 
 .month-year {
-  font-family: 'Livvic', sans-serif;
+  font-family: var(--font-body);
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -445,7 +715,7 @@ const deleteItem = (itemId: string) => {
 
 .weekday-header {
   text-align: center;
-  font-family: 'Livvic', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-secondary);
@@ -458,7 +728,7 @@ const deleteItem = (itemId: string) => {
   border-radius: 6px;
   background: var(--bg-tertiary);
   color: var(--text-primary);
-  font-family: 'Livvic', sans-serif;
+  font-family: var(--font-ui);
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
@@ -587,7 +857,7 @@ const deleteItem = (itemId: string) => {
 
 .schedule-item strong {
   display: block;
-  font-family: 'Livvic', sans-serif;
+  font-family: var(--font-body);
   font-weight: 600;
   margin-bottom: 0.25rem;
 }
@@ -643,7 +913,7 @@ const deleteItem = (itemId: string) => {
 }
 
 .modal-header h2 {
-  font-family: 'Livvic', sans-serif;
+  font-family: var(--font-body);
   font-weight: 600;
   font-size: 1.3rem;
   color: var(--text-primary);
@@ -683,7 +953,7 @@ const deleteItem = (itemId: string) => {
 }
 
 .form-group label {
-  font-family: 'Livvic', sans-serif;
+  font-family: var(--font-body);
   font-weight: 600;
   color: var(--text-primary);
   font-size: 0.95rem;
@@ -695,7 +965,7 @@ const deleteItem = (itemId: string) => {
   border: 1px solid var(--border-color);
   border-radius: 6px;
   color: var(--text-primary);
-  font-family: 'Livvic', sans-serif;
+  font-family: var(--font-body);
   font-size: 1rem;
   transition: border-color 0.2s ease, background-color 0.2s ease;
 }
@@ -719,7 +989,7 @@ const deleteItem = (itemId: string) => {
   border: none;
   color: white;
   border-radius: 6px;
-  font-family: 'Livvic', sans-serif;
+  font-family: var(--font-ui);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -736,7 +1006,7 @@ const deleteItem = (itemId: string) => {
   border: none;
   color: white;
   border-radius: 6px;
-  font-family: 'Livvic', sans-serif;
+  font-family: var(--font-ui);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -745,6 +1015,119 @@ const deleteItem = (itemId: string) => {
 .save-btn:hover {
   background: #388e3c;
   transform: translateY(-1px);
+}
+
+@media (min-width: 481px) {
+  .schedule-container {
+    height: 100%;
+    padding: 1.5rem;
+  }
+
+  .time-labels {
+    width: 58px;
+  }
+}
+
+@media (min-width: 768px) {
+  .schedule-container {
+    padding: 2rem 2.5rem;
+  }
+
+  .time-labels {
+    width: 66px;
+  }
+
+  .hour-label {
+    padding-right: 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  .schedule-item {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .schedule-item strong {
+    font-size: 0.95rem;
+  }
+
+  .week-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.45rem;
+  }
+
+  .week-day {
+    display: flex;
+    flex-direction: column;
+    min-height: 260px;
+  }
+
+  .week-day-heading {
+    min-height: 64px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .week-day-events {
+    padding: 0.4rem;
+  }
+
+  .week-event {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.2rem;
+    padding: 0.4rem;
+    font-size: 0.72rem;
+  }
+
+  .month-cell {
+    min-height: 112px;
+    padding: 0.45rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .calendar-toolbar {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+  }
+
+  .calendar-period {
+    text-align: center;
+  }
+
+  .month-cell {
+    min-height: 60px;
+    padding: 0.2rem;
+  }
+
+  .month-date {
+    width: 22px;
+    height: 22px;
+  }
+
+  .month-event {
+    display: block;
+    width: 7px;
+    height: 7px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--event-color);
+    font-size: 0;
+  }
+
+  .month-event-time,
+  .month-event-title,
+  .more-events {
+    display: none;
+  }
+
+  .month-events {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.2rem;
+  }
 }
 </style>
 

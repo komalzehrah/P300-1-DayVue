@@ -208,7 +208,7 @@ const handleSubmit = () => {
 }
 
 .modal-header h2 {
-  font-family: 'Livvic', sans-serif;
+  font-family: var(--font-body);
   font-weight: 600;
   font-size: 1.3rem;
 }
@@ -240,7 +240,7 @@ const handleSubmit = () => {
 }
 
 .form-group label {
-  font-family: 'Livvic', sans-serif;
+  font-family: var(--font-body);
   font-weight: 600;
   color: var(--text-primary);
   font-size: 0.95rem;
@@ -253,7 +253,7 @@ const handleSubmit = () => {
   border: 1px solid var(--border-color);
   border-radius: 6px;
   color: var(--text-primary);
-  font-family: 'Livvic', sans-serif;
+  font-family: var(--font-body);
   font-size: 1rem;
   transition: border-color 0.2s ease, background-color 0.2s ease;
 }
@@ -296,9 +296,9 @@ const handleSubmit = () => {
   padding: 0.75rem;
   border: none;
   border-radius: 6px;
-  font-family: 'Livvic', sans-serif;
+  font-family: var(--font-ui);
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
 }
