@@ -42,21 +42,39 @@ interface TaskMetric {
 }
 
 interface ScheduleEvent {
-  date: string
+  date?: string
   startTime: string
+  durationMinutes: number
   title: string
   category: string
+  daysOfWeek?: string[]
 }
 
 interface MonthMetric {
   month: string
   daysInMonth: number
   tasks: TaskMetric[]
-  schedule: { events: ScheduleEvent[] }
+  schedule: { recurringEvents: ScheduleEvent[]; events: ScheduleEvent[] }
   habits: Record<HabitKey, { completedDays: number[] }>
 }
 
+type ChartView = 'weekly' | 'monthly'
+
+interface ChartBucket {
+  key: string
+  label: string
+  dates: string[]
+}
+
 const months = metrics.months as MonthMetric[]
+const chartViews: Array<{ value: ChartView; label: string }> = [
+  { value: 'weekly', label: 'Weekly' },
+  { value: 'monthly', label: 'Monthly' }
+]
+const habitView = ref<ChartView>('monthly')
+const taskView = ref<ChartView>('monthly')
+const scheduleView = ref<ChartView>('monthly')
+const monthByKey = new Map(months.map(month => [month.month, month]))
 interface DashboardDateRange {
   startDate: string
   endDate: string
@@ -69,19 +87,61 @@ const dateRange = inject<Reactive<DashboardDateRange>>('dashboardDateRange', {
 const habitSeries: Array<{ key: HabitKey; label: string }> = [
   { key: 'gym', label: 'Gym' },
   { key: 'meditation', label: 'Meditation' },
-  { key: 'bedtimeBefore11pm', label: 'Bed before 11' },
+  { key: 'bedtimeBefore11pm', label: 'Bed Before 11' },
   { key: 'sketchFor5Minutes', label: 'Sketch' }
 ]
 const chartColors = computed(() => isLightMode.value
-  ? { gym: '#a67c00', meditation: '#008777', bedtimeBefore11pm: '#ca4025', sketchFor5Minutes: '#3d5cc7', tasks: '#008777' }
-  : { gym: '#e9d985', meditation: '#4fbcae', bedtimeBefore11pm: '#ff8c69', sketchFor5Minutes: '#94aee0', tasks: '#4fbcae' }
+  ? { gym: '#506bff', meditation: '#f17418', bedtimeBefore11pm: '#c6d608', sketchFor5Minutes: '#ad00d9', tasks: '#506bff' }
+  : { gym: '#30b3f4', meditation: '#ff9076', bedtimeBefore11pm: '#d8e910', sketchFor5Minutes: '#cb67de', tasks: '#30b3f4' }
+)
+const categoryColors = computed(() => isLightMode.value
+  ? { work: '#506bff', health: '#f17418', family: '#c6d608', social: '#ad00d9', personal: '#f23daa', home: '#c6d608', other: '#ad00d9' }
+  : { work: '#30b3f4', health: '#ff9076', family: '#d8e910', social: '#cb67de', personal: '#f675c5', home: '#d8e910', other: '#cb67de' }
 )
 const chartTextColor = computed(() => isLightMode.value ? '#35413f' : '#9db3b1')
 const chartGridColor = computed(() => isLightMode.value ? 'rgba(38, 83, 76, 0.16)' : 'rgba(157, 179, 177, 0.12)')
+const titleCase = (value: string) => value.replace(/\b\w/g, character => character.toUpperCase())
 const parseDate = (value: string) => {
   const [year = 1970, month = 1, day = 1] = value.split('-').map(Number)
   return new Date(year, month - 1, day)
 }
+
+const dateString = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+
+const createBuckets = (view: ChartView): ChartBucket[] => {
+  const start = parseDate(dateRange.startDate)
+  const end = parseDate(dateRange.endDate)
+  const grouped = new Map<string, string[]>()
+
+  for (const date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+    const currentDate = dateString(date)
+    const keyDate = new Date(date)
+    if (view === 'weekly') keyDate.setDate(keyDate.getDate() - ((keyDate.getDay() + 6) % 7))
+    const key = view === 'monthly' ? currentDate.slice(0, 7) : dateString(keyDate)
+    const dates = grouped.get(key) ?? []
+    dates.push(currentDate)
+    grouped.set(key, dates)
+  }
+
+  return [...grouped].map(([key, dates]) => {
+    const first = parseDate(dates[0] ?? key)
+    const last = parseDate(dates[dates.length - 1] ?? key)
+    let label = first.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    if (view === 'weekly' && dates.length > 1) {
+      const sameMonth = first.getMonth() === last.getMonth()
+      const endLabel = last.toLocaleDateString('en-US', sameMonth ? { day: 'numeric' } : { month: 'short', day: 'numeric' })
+      label = `${label}-${endLabel}`
+    } else if (view === 'monthly') {
+      label = first.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+    }
+    return { key, label, dates }
+  })
+}
+
+const habitBuckets = computed(() => createBuckets(habitView.value))
+const taskBuckets = computed(() => createBuckets(taskView.value))
+const scheduleBuckets = computed(() => createBuckets(scheduleView.value))
 
 const monthWindow = (month: MonthMetric) => {
   const [year = 1970, monthNumber = 1] = month.month.split('-').map(Number)
@@ -102,9 +162,6 @@ const monthWindow = (month: MonthMetric) => {
 }
 
 const selectedMonths = computed(() => months.filter(month => monthWindow(month)))
-const monthLabels = computed(() => selectedMonths.value.map(({ month }) =>
-  new Date(`${month}-01T12:00:00`).toLocaleDateString('en-US', { month: 'short' })
-))
 
 const habitRate = (month: MonthMetric, habit: HabitKey) => {
   const window = monthWindow(month)
@@ -132,9 +189,8 @@ const taskRate = (month: MonthMetric) => {
   return Math.round((totals.completed / totals.total) * 100)
 }
 
-const taskRates = computed(() => selectedMonths.value.map(taskRate))
 const taskFollowThrough = computed(() => {
-  const rates = taskRates.value
+  const rates = selectedMonths.value.map(taskRate)
   return rates.length ? Math.round(rates.reduce((sum, rate) => sum + rate, 0) / rates.length) : 0
 })
 const habitConsistency = computed(() => {
@@ -142,22 +198,8 @@ const habitConsistency = computed(() => {
   return rates.length ? Math.round(rates.reduce((sum, rate) => sum + rate, 0) / rates.length) : 0
 })
 const eventsInRange = computed(() => months.flatMap(month => month.schedule.events)
-  .filter(event => event.date >= dateRange.startDate && event.date <= dateRange.endDate))
+  .filter(event => event.date && event.date >= dateRange.startDate && event.date <= dateRange.endDate))
 const eventCount = computed(() => eventsInRange.value.length)
-const gymSessions = computed(() => selectedMonths.value.reduce((sum, month) => {
-  const window = monthWindow(month)
-  if (!window) return sum
-  return sum + month.habits.gym.completedDays.filter(day => day >= window.startDay && day <= window.endDay).length
-}, 0))
-const highlights = computed(() => eventsInRange.value
-  .filter(event => event.category === 'family' || event.category === 'social')
-  .slice(-4))
-const highlightMonth = computed(() => {
-  const lastMonth = selectedMonths.value[selectedMonths.value.length - 1]
-  return lastMonth
-    ? new Date(`${lastMonth.month}-01T12:00:00`).toLocaleDateString('en-US', { month: 'long' })
-    : 'Selected period'
-})
 const dateRangeLabel = computed(() => {
   const start = parseDate(dateRange.startDate)
   const end = parseDate(dateRange.endDate)
@@ -166,11 +208,65 @@ const dateRangeLabel = computed(() => {
   return `${startLabel} - ${endLabel}`
 })
 
+const habitRateForBucket = (bucket: ChartBucket, habit: HabitKey) => {
+  const completed = bucket.dates.reduce((count, date) => {
+    const month = monthByKey.get(date.slice(0, 7))
+    const day = Number(date.slice(-2))
+    return count + (month?.habits[habit].completedDays.includes(day) ? 1 : 0)
+  }, 0)
+  const target = habit === 'gym' ? bucket.dates.length * 3 / 7 : bucket.dates.length
+  return target ? Math.min(100, Math.round((completed / target) * 100)) : 0
+}
+
+const taskRateForBucket = (bucket: ChartBucket) => {
+  const totals = bucket.dates.reduce((result, date) => {
+    const month = monthByKey.get(date.slice(0, 7))
+    if (!month) return result
+    for (const task of month.tasks) {
+      if (task.repeat === 'daily') {
+        result.total += 1
+        result.completed += task.completionRate ?? 0
+      } else if (task.dueDate === date) {
+        result.total += 1
+        if (task.status === 'completed') result.completed += 1
+      }
+    }
+    return result
+  }, { total: 0, completed: 0 })
+
+  return totals.total ? Math.round((totals.completed / totals.total) * 100) : 0
+}
+
+const scheduleCategories = computed(() => [...new Set(months.flatMap(month => [
+  ...month.schedule.recurringEvents,
+  ...month.schedule.events
+].map(event => event.category)))].sort())
+const scheduleLegendItems = computed(() => scheduleCategories.value.map(category => ({
+  category,
+  label: titleCase(category),
+  color: categoryColors.value[category as keyof typeof categoryColors.value] ?? categoryColors.value.other
+})))
+
+const scheduleMinutesForBucket = (bucket: ChartBucket) => {
+  const minutes: Record<string, number> = {}
+  for (const date of bucket.dates) {
+    const month = monthByKey.get(date.slice(0, 7))
+    if (!month) continue
+    const weekday = parseDate(date).toLocaleDateString('en-US', { weekday: 'long' })
+    const events = [
+      ...month.schedule.recurringEvents.filter(event => event.daysOfWeek?.includes(weekday)),
+      ...month.schedule.events.filter(event => event.date === date)
+    ]
+    for (const event of events) minutes[event.category] = (minutes[event.category] ?? 0) + event.durationMinutes
+  }
+  return minutes
+}
+
 const habitChartData = computed<ChartData<'line'>>(() => ({
-  labels: monthLabels.value,
+  labels: habitBuckets.value.map(bucket => bucket.label),
   datasets: habitSeries.map(habit => ({
     label: habit.label,
-    data: selectedMonths.value.map(month => habitRate(month, habit.key)),
+    data: habitBuckets.value.map(bucket => habitRateForBucket(bucket, habit.key)),
     borderColor: chartColors.value[habit.key],
     backgroundColor: chartColors.value[habit.key],
     tension: 0.35,
@@ -180,10 +276,10 @@ const habitChartData = computed<ChartData<'line'>>(() => ({
 }))
 
 const taskChartData = computed<ChartData<'bar'>>(() => ({
-  labels: monthLabels.value,
+  labels: taskBuckets.value.map(bucket => bucket.label),
   datasets: [{
     label: 'Tasks completed',
-    data: taskRates.value,
+    data: taskBuckets.value.map(taskRateForBucket),
     backgroundColor: chartColors.value.tasks,
     hoverBackgroundColor: isLightMode.value ? '#05685f' : '#68d0c2',
     borderRadius: 4,
@@ -191,19 +287,31 @@ const taskChartData = computed<ChartData<'bar'>>(() => ({
   }]
 }))
 
+const scheduleChartData = computed<ChartData<'bar'>>(() => ({
+  labels: scheduleBuckets.value.map(bucket => bucket.label),
+  datasets: scheduleLegendItems.value.map(({ category, label, color }) => ({
+    label,
+    data: scheduleBuckets.value.map(bucket => {
+      const minutes = scheduleMinutesForBucket(bucket)
+      const total = Object.values(minutes).reduce((sum, value) => sum + value, 0)
+      return total ? Math.round(((minutes[category] ?? 0) / total) * 100) : 0
+    }),
+    backgroundColor: color,
+    borderRadius: 3,
+    maxBarThickness: 32
+  }))
+}))
+
 const habitChartOptions = computed<ChartOptions<'line'>>(() => ({
   responsive: true,
   maintainAspectRatio: false,
   interaction: { intersect: false, mode: 'index' },
   plugins: {
-    legend: {
-      position: 'bottom',
-      labels: { color: chartTextColor.value, usePointStyle: true, boxWidth: 8, padding: 18, font: { family: 'Syne' } }
-    },
+    legend: { display: false },
     tooltip: { callbacks: { label: context => `${context.dataset.label}: ${context.parsed.y}%` } }
   },
   scales: {
-    x: { grid: { display: false }, ticks: { color: chartTextColor.value }, border: { display: false } },
+    x: { grid: { display: false }, ticks: { color: chartTextColor.value, maxTicksLimit: 16 }, border: { display: false } },
     y: {
       min: 0,
       max: 100,
@@ -222,7 +330,7 @@ const taskChartOptions = computed<ChartOptions<'bar'>>(() => ({
     tooltip: { callbacks: { label: context => ` ${context.parsed.y}% completed` } }
   },
   scales: {
-    x: { grid: { display: false }, ticks: { color: chartTextColor.value }, border: { display: false } },
+    x: { grid: { display: false }, ticks: { color: chartTextColor.value, maxTicksLimit: 16 }, border: { display: false } },
     y: {
       min: 0,
       max: 100,
@@ -233,8 +341,31 @@ const taskChartOptions = computed<ChartOptions<'bar'>>(() => ({
   }
 }))
 
-const formatHighlightDate = (value: string) =>
-  new Date(`${value}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+const scheduleChartOptions = computed<ChartOptions<'bar'>>(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  interaction: { intersect: false, mode: 'index' },
+  plugins: {
+    legend: { display: false },
+    tooltip: { callbacks: { label: context => ` ${context.dataset.label}: ${context.parsed.y}%` } }
+  },
+  scales: {
+    x: {
+      stacked: true,
+      grid: { display: false },
+      ticks: { color: chartTextColor.value, maxTicksLimit: 16 },
+      border: { display: false }
+    },
+    y: {
+      stacked: true,
+      min: 0,
+      max: 100,
+      ticks: { color: chartTextColor.value, stepSize: 25, callback: value => `${value}%` },
+      grid: { color: chartGridColor.value },
+      border: { display: false }
+    }
+  }
+}))
 </script>
 
 <template>
@@ -248,6 +379,11 @@ const formatHighlightDate = (value: string) =>
 
     <section class="summary-grid" :aria-label="`Summary for ${dateRangeLabel}`">
       <article class="summary-item">
+        <span class="summary-label">Calendar commitments</span>
+        <strong>{{ eventCount }}</strong>
+        <span class="summary-note">Dated events and milestones</span>
+      </article>
+      <article class="summary-item">
         <span class="summary-label">Task follow-through</span>
         <strong>{{ taskFollowThrough }}<small>%</small></strong>
         <span class="summary-note">Average across selected months</span>
@@ -257,53 +393,71 @@ const formatHighlightDate = (value: string) =>
         <strong>{{ habitConsistency }}<small>%</small></strong>
         <span class="summary-note">Across four daily habits</span>
       </article>
-      <article class="summary-item">
-        <span class="summary-label">Calendar commitments</span>
-        <strong>{{ eventCount }}</strong>
-        <span class="summary-note">Dated events and milestones</span>
-      </article>
-      <article class="summary-item">
-        <span class="summary-label">Gym sessions</span>
-        <strong>{{ gymSessions }}</strong>
-        <span class="summary-note">Recorded in selected range</span>
-      </article>
     </section>
 
     <section class="dashboard-grid" aria-label="Progress trends">
-      <article class="chart-panel habit-panel">
+      <article class="chart-panel schedule-panel">
         <div class="panel-heading">
-          <h2>Habit Consistency</h2>
-          <span>Monthly goal completion</span>
+          <div class="panel-copy">
+            <h2>Schedule by Category</h2>
+            <span>Share of scheduled time</span>
+          </div>
+          <div class="view-switch" role="group" aria-label="Schedule chart view">
+            <button v-for="view in chartViews" :key="view.value" type="button" :aria-pressed="scheduleView === view.value" @click="scheduleView = view.value">
+              {{ view.label }}
+            </button>
+          </div>
         </div>
-        <div class="chart-area habit-chart">
-          <Line :data="habitChartData" :options="habitChartOptions" />
+        <div class="chart-area schedule-chart">
+          <Bar :data="scheduleChartData" :options="scheduleChartOptions" />
+        </div>
+        <div class="chart-legend" aria-label="Schedule category chart legend">
+          <span v-for="item in scheduleLegendItems" :key="item.category" class="chart-legend-item">
+            <span class="chart-legend-swatch" :style="{ backgroundColor: item.color }" aria-hidden="true" />
+            {{ item.label }}
+          </span>
         </div>
       </article>
 
       <article class="chart-panel task-panel">
         <div class="panel-heading">
-          <h2>Task Follow-Through</h2>
-          <span>Daily and one-off tasks</span>
+          <div class="panel-copy">
+            <h2>Task Follow-Through</h2>
+            <span>Completion rate by period</span>
+          </div>
+          <div class="view-switch" role="group" aria-label="Task chart view">
+            <button v-for="view in chartViews" :key="view.value" type="button" :aria-pressed="taskView === view.value" @click="taskView = view.value">
+              {{ view.label }}
+            </button>
+          </div>
         </div>
         <div class="chart-area task-chart">
           <Bar :data="taskChartData" :options="taskChartOptions" />
         </div>
       </article>
-    </section>
 
-    <section class="highlights-section">
-      <div class="panel-heading">
-          <h2>{{ highlightMonth }}, Outside Work</h2>
-        <span>Family and social commitments</span>
-      </div>
-      <ul class="highlights-list">
-        <li v-for="event in highlights" :key="event.date + event.title">
-          <time>{{ formatHighlightDate(event.date) }}</time>
-          <span class="highlight-marker" :class="event.category" />
-          <span>{{ event.title }}</span>
-          <span class="highlight-category">{{ event.category }}</span>
-        </li>
-      </ul>
+      <article class="chart-panel habit-panel">
+        <div class="panel-heading">
+          <div class="panel-copy">
+            <h2>Habit Consistency</h2>
+            <span>Goal completion by period</span>
+          </div>
+          <div class="view-switch" role="group" aria-label="Habit chart view">
+            <button v-for="view in chartViews" :key="view.value" type="button" :aria-pressed="habitView === view.value" @click="habitView = view.value">
+              {{ view.label }}
+            </button>
+          </div>
+        </div>
+        <div class="chart-area habit-chart">
+          <Line :data="habitChartData" :options="habitChartOptions" />
+        </div>
+        <div class="chart-legend" aria-label="Habit chart legend">
+          <span v-for="habit in habitSeries" :key="habit.key" class="chart-legend-item">
+            <span class="chart-legend-swatch" :style="{ backgroundColor: chartColors[habit.key] }" aria-hidden="true" />
+            {{ habit.label }}
+          </span>
+        </div>
+      </article>
     </section>
   </div>
 </template>
@@ -319,8 +473,7 @@ const formatHighlightDate = (value: string) =>
 
 .dashboard-heading,
 .summary-grid,
-.dashboard-grid,
-.highlights-section {
+.dashboard-grid {
   width: min(100%, 1280px);
   margin-inline: auto;
 }
@@ -419,10 +572,16 @@ const formatHighlightDate = (value: string) =>
 
 .panel-heading {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
   margin-bottom: 0.75rem;
+}
+
+.panel-copy {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
 }
 
 .panel-heading h2 {
@@ -433,11 +592,38 @@ const formatHighlightDate = (value: string) =>
   font-weight: 400;
 }
 
-.panel-heading > span {
+.panel-copy > span {
   color: var(--text-secondary);
   font-family: var(--font-body);
   font-size: 0.68rem;
-  text-align: right;
+}
+
+.view-switch {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-primary);
+}
+
+.view-switch button {
+  min-height: 26px;
+  padding: 0.25rem 0.4rem;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 0.65rem;
+  font-weight: 500;
+}
+
+.view-switch button[aria-pressed='true'] {
+  background: var(--selected-surface);
+  color: #051515;
 }
 
 .chart-area {
@@ -453,56 +639,32 @@ const formatHighlightDate = (value: string) =>
   height: 200px;
 }
 
-.highlights-section {
-  padding-bottom: 1rem;
+.schedule-chart {
+  height: 240px;
 }
 
-.highlights-section > .panel-heading {
-  padding: 0.25rem 0;
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem 1rem;
+  margin-top: 0.75rem;
 }
 
-.highlights-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.highlights-list li {
-  display: grid;
-  grid-template-columns: 48px 8px minmax(0, 1fr) auto;
+.chart-legend-item {
+  display: inline-flex;
   align-items: center;
-  gap: 0.65rem;
-  min-height: 48px;
-  border-top: 1px solid var(--border-color);
-  color: var(--text-primary);
-  font-family: var(--font-body);
-  font-size: 0.78rem;
-}
-
-.highlights-list time,
-.highlight-category {
+  gap: 4px;
   color: var(--text-secondary);
-  font-family: var(--font-ui);
+  font-family: var(--font-body);
   font-size: 0.68rem;
 }
 
-.highlight-marker {
-  width: 7px;
-  height: 7px;
+.chart-legend-swatch {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
   border-radius: 50%;
-  background: var(--accent-color);
-}
-
-.highlight-marker.social {
-  background: #4fbcae;
-}
-
-.highlight-marker.family {
-  background: #ff8c69;
-}
-
-.highlight-category {
-  text-transform: capitalize;
 }
 
 @media (min-width: 640px) {
@@ -511,7 +673,7 @@ const formatHighlightDate = (value: string) =>
   }
 
   .summary-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 1rem;
     margin-bottom: 1.25rem;
   }
@@ -537,6 +699,12 @@ const formatHighlightDate = (value: string) =>
 
   .task-chart {
     height: 240px;
+  }
+}
+
+@media (min-width: 1080px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

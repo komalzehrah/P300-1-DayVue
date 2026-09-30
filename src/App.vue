@@ -41,6 +41,7 @@ body {
   --accent-hover: #dcc968;
   --accent-surface: #e9d985;
   --accent-surface-hover: #dcc968;
+  --selected-surface: #e9d985;
   font-family: var(--font-body);
 }
 
@@ -55,5 +56,6 @@ body.light-mode {
   --accent-hover: #0a6a6d;
   --accent-surface: #8ed7cf;
   --accent-surface-hover: #79cfc7;
+  --selected-surface: #e9d985;
 }
 </style>

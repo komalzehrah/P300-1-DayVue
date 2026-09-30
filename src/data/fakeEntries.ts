@@ -9,6 +9,7 @@ export interface DatedScheduleItem {
   time: string
   title: string
   duration: number
+  category?: string
   icon?: string
   color?: string
 }
@@ -147,6 +148,7 @@ const createScheduleItems = () => {
           time: event.startTime,
           title: event.title,
           duration: event.durationMinutes,
+          category: event.category,
           icon: categoryIcons[event.category] ?? 'ClockIcon',
           color: categoryColors[event.category] ?? '#e9d985'
         })
@@ -159,6 +161,7 @@ const createScheduleItems = () => {
           time: event.startTime,
           title: event.title,
           duration: event.durationMinutes,
+          category: event.category,
           icon: categoryIcons[event.category] ?? 'ClockIcon',
           color: categoryColors[event.category] ?? '#e9d985'
         })

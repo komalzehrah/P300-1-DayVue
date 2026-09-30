@@ -22,6 +22,7 @@ interface ScheduleItem {
   time: string
   title: string
   duration: number
+  category?: string
   frequency?: string
   icon?: string
   color?: string
@@ -201,7 +202,8 @@ const deleteItem = (itemId: string) => {
 
 <template>
   <div class="schedule-container">
-    <div class="calendar-toolbar">
+    <header class="schedule-heading">
+      <h1>Schedule</h1>
       <div class="calendar-view-switch" role="group" aria-label="Calendar view">
         <button
           v-for="view in calendarViews"
@@ -214,7 +216,10 @@ const deleteItem = (itemId: string) => {
           {{ view.label }}
         </button>
       </div>
-      <span v-if="calendarView !== 'daily'" class="calendar-period">{{ calendarPeriod }}</span>
+    </header>
+
+    <div v-if="calendarView !== 'daily'" class="calendar-toolbar">
+      <span class="calendar-period">{{ calendarPeriod }}</span>
     </div>
 
     <div v-if="calendarView === 'daily'" class="calendar-wrapper">
@@ -340,23 +345,48 @@ const deleteItem = (itemId: string) => {
 
 <style scoped>
 .schedule-container {
-  padding: 0.5rem 1rem 1rem;
+  padding: 1rem;
   overflow-y: auto;
   height: calc(100vh - 180px);
   background: var(--bg-primary);
 }
 
-.calendar-toolbar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+.schedule-heading {
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto 1rem;
+}
+
+.schedule-heading h1 {
+  margin: 0;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 1.2rem;
+  font-weight: 400;
+}
+
+.calendar-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   gap: 0.75rem;
   margin-bottom: 1rem;
 }
 
+.calendar-toolbar,
+.calendar-wrapper,
+.week-grid,
+.month-grid {
+  width: 100%;
+  max-width: 960px;
+  margin-inline: auto;
+}
+
 .calendar-view-switch {
-  grid-column: 2;
-  grid-row: 1;
   display: inline-flex;
   gap: 0.2rem;
   padding: 0.125rem;
@@ -384,7 +414,7 @@ const deleteItem = (itemId: string) => {
 }
 
 .view-option.active {
-  background: var(--accent-surface);
+  background: var(--selected-surface);
   color: #000;
 }
 
@@ -436,7 +466,7 @@ const deleteItem = (itemId: string) => {
 
 .week-day-heading.selected,
 .week-day-heading.selected strong {
-  background: var(--accent-surface);
+  background: var(--selected-surface);
   color: #000;
 }
 
@@ -553,7 +583,7 @@ const deleteItem = (itemId: string) => {
 }
 
 .month-date.selected {
-  background: var(--accent-surface);
+  background: var(--selected-surface);
   color: #000;
 }
 
@@ -777,7 +807,7 @@ const deleteItem = (itemId: string) => {
 }
 
 .calendar-day.selected {
-  background: var(--accent-surface);
+  background: var(--selected-surface);
   color: #000;
   font-weight: 600;
 }
@@ -966,7 +996,7 @@ const deleteItem = (itemId: string) => {
 @media (min-width: 481px) {
   .schedule-container {
     height: 100%;
-    padding: 0.75rem 1.5rem 1.5rem;
+    padding: 1.5rem;
   }
 
   .time-labels {
@@ -976,7 +1006,7 @@ const deleteItem = (itemId: string) => {
 
 @media (min-width: 768px) {
   .schedule-container {
-    padding: 1rem 2.5rem 2rem;
+    padding: 2rem;
   }
 
   .time-labels {
@@ -1043,13 +1073,11 @@ const deleteItem = (itemId: string) => {
 
 @media (max-width: 480px) {
   .calendar-toolbar {
-    display: flex;
-    align-items: center;
-    flex-direction: column;
+    justify-content: flex-end;
   }
 
   .calendar-period {
-    text-align: center;
+    text-align: right;
   }
 
   .month-cell {

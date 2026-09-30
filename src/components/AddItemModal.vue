@@ -16,6 +16,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 type ItemKind = 'Schedule' | 'Tasks' | 'Habits'
+type EventCategory = 'work' | 'social' | 'personal' | 'other'
 type TaskPriority = 'low' | 'medium' | 'high'
 type TaskProgress = 'not-started' | 'in-progress' | 'done'
 type RepeatFrequency = 'daily' | 'weekly' | 'custom'
@@ -29,6 +30,7 @@ interface AddItemData {
   frequency?: string
   icon?: string
   color?: string
+  category?: string
   priority?: TaskPriority
   progress?: TaskProgress
   repeat?: boolean
@@ -68,6 +70,13 @@ const durationPresets = [
   { label: '2h', value: 120 }
 ]
 
+const eventCategories: Array<{ value: EventCategory; label: string }> = [
+  { value: 'work', label: 'Work' },
+  { value: 'social', label: 'Social' },
+  { value: 'personal', label: 'Personal' },
+  { value: 'other', label: 'Other' }
+]
+
 const initialDuration = props.item?.duration ?? 30
 const itemTitle = ref(props.item?.title ?? '')
 const itemTime = ref(props.item?.time ?? '09:00')
@@ -93,6 +102,10 @@ const repeatFrequency = ref<RepeatFrequency>(props.item?.repeatFrequency ?? 'dai
 const repeatInterval = ref(String(props.item?.repeatInterval ?? 2))
 const selectedIcon = ref(props.item?.icon ?? 'ClockIcon')
 const selectedColor = ref(props.item?.color ?? '#FF8C69')
+const eventCategory = ref(props.item?.category ?? 'personal')
+const legacyEventCategory = props.item?.category && !eventCategories.some(category => category.value === props.item?.category)
+  ? props.item.category
+  : undefined
 
 const timeOptions = Array.from({ length: 48 }, (_, index) => {
   const totalMinutes = index * 30
@@ -184,7 +197,8 @@ const handleSubmit = () => {
       time: itemTime.value,
       duration: parseInt(itemDuration.value, 10),
       icon: selectedIcon.value,
-      color: selectedColor.value
+      color: selectedColor.value,
+      category: eventCategory.value
     }),
     ...(props.activeTab === 'Tasks' && {
       priority: itemPriority.value,
@@ -235,6 +249,18 @@ const deleteItem = () => {
             {{ activeTab === 'Schedule' ? 'Event title' : activeTab === 'Tasks' ? 'Task name' : 'Habit name' }}
           </label>
           <input id="item-title" v-model="itemTitle" type="text" placeholder="Enter item title" required />
+        </div>
+
+        <div v-if="activeTab === 'Schedule'" class="form-group">
+          <label for="event-category">Category</label>
+          <select id="event-category" v-model="eventCategory">
+            <option v-if="legacyEventCategory" :value="legacyEventCategory">
+              {{ legacyEventCategory.charAt(0).toUpperCase() + legacyEventCategory.slice(1) }}
+            </option>
+            <option v-for="category in eventCategories" :key="category.value" :value="category.value">
+              {{ category.label }}
+            </option>
+          </select>
         </div>
 
         <div v-if="activeTab === 'Schedule'" class="form-group">
@@ -520,7 +546,7 @@ const deleteItem = () => {
 
 .duration-option.active {
   border-color: var(--accent-color);
-  background: var(--accent-surface);
+  background: var(--selected-surface);
   color: #000;
 }
 
@@ -635,6 +661,10 @@ const deleteItem = () => {
   color: #ff9b7f;
 }
 
+body.light-mode .form-actions .delete-btn {
+  color: #762b1d;
+}
+
 .form-actions.edit-actions .delete-btn {
   margin-right: auto;
 }
@@ -682,7 +712,7 @@ const deleteItem = () => {
 
 .icon-option.active {
   border-color: var(--accent-color);
-  background: var(--accent-surface);
+  background: var(--selected-surface);
   color: #000;
 }
 

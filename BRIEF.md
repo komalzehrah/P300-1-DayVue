@@ -44,6 +44,7 @@ Generate a fake dataset as a JSON file (src/data/metrics.json).
     -Adding an item on the schedule will open a modal that allows users to enter the following inputs:
         -Event title/name
         -duration with options to quick select preset durations in the following increments: 1, 5, 10, 15, 20, 30, 45, 1h, 1.5h, 2h or add a custom duration from a dropdown.
+        -category: work, social, personal, other
         -icon (this will display in a circle on the left side of the event block on the calendar)
         -color (for the event block on the calendar)
 
@@ -64,8 +65,14 @@ Generate a fake dataset as a JSON file (src/data/metrics.json).
         -same as adding but add a delete option in the actions (similar to tasks and events)
 
 -Recap page: a dashboard with a view of stats and metrics based on data entered in the other 3 pages. This page can be filtered within a selected date range. summaries and key patterns are displayed as cards.
-    -Include cards:
-        -
+    -Include cards displaying:
+        -Task follow-through percentage
+        -Overall Habit Consistency percentage across all habits
+        -Number of Calendar commitments
+        -Habit Consistency Line graph tracking habit consistency percentages for each active habit over the course of the selected date range
+        -Task follow-through bar graph for all tasks over the course of the selected date range 
+        -A stacked bar graph showing what percentage of the schedule each category takes up.
+    -for each of the 3 graphs, include a daily, weekly, monthly view that updates the x axis labels to match the view.
     
 
 

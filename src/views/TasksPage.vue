@@ -158,9 +158,12 @@ const deleteTask = (taskId: string) => {
 
 .tasks-toolbar {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   gap: 1rem;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
 }
 
 .tasks-toolbar h1 {
@@ -245,7 +248,7 @@ const deleteTask = (taskId: string) => {
 
 .task-toggle.checked {
   border-color: var(--accent-color);
-  background: var(--accent-surface);
+  background: var(--selected-surface);
 }
 
 .task-toggle :deep(svg) {
@@ -286,7 +289,7 @@ const deleteTask = (taskId: string) => {
 .task-chip {
   min-height: 24px;
   padding: 0.25rem 0.55rem;
-  border: 0;
+  border: 1px solid color-mix(in srgb, currentColor 24%, transparent);
   border-radius: 999px;
   cursor: pointer;
   font-family: var(--font-ui);

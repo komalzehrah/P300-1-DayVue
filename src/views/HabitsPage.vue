@@ -41,16 +41,15 @@ const monthData = computed(() => {
   const selected = parseDate(selectedDate.value)
   const year = selected.getFullYear()
   const month = selected.getMonth()
-  const firstDay = new Date(year, month, 1)
   const daysInMonth = new Date(year, month + 1, 0).getDate()
-  const days: Array<HabitDay | null> = Array(firstDay.getDay()).fill(null)
+  const days: HabitDay[] = []
 
   for (let day = 1; day <= daysInMonth; day++) {
     days.push({ date: formatDate(new Date(year, month, day)), day })
   }
 
   return {
-    startDate: formatDate(firstDay),
+    startDate: formatDate(new Date(year, month, 1)),
     label: selected.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
     endDate: formatDate(new Date(year, month, daysInMonth)),
     days
@@ -188,22 +187,20 @@ const deleteHabit = (habitId: string) => {
             </button>
           </header>
           <div class="habit-days" :aria-label="`${monthData.label} log for ${habit.title}`">
-            <template v-for="(day, index) in monthData.days" :key="day?.date ?? `empty-${index}`">
-              <span v-if="!day" class="habit-day-placeholder" />
-              <span
-                v-else
-                class="habit-day"
-                :class="{ logged: isLogged(habit, day.date), unavailable: !canLog(habit, day.date) }"
-                role="img"
-                :aria-label="`${habit.title}, ${day.date}${isLogged(habit, day.date) ? ', logged' : ', not logged'}`"
-                :title="day.date"
-              >
-                <span>{{ day.day }}</span>
-                <span class="habit-day-circle">
-                  <CheckIcon v-if="isLogged(habit, day.date)" />
-                </span>
+            <span
+              v-for="day in monthData.days"
+              :key="day.date"
+              class="habit-day"
+              :class="{ logged: isLogged(habit, day.date), unavailable: !canLog(habit, day.date) }"
+              role="img"
+              :aria-label="`${habit.title}, ${day.date}${isLogged(habit, day.date) ? ', logged' : ', not logged'}`"
+              :title="day.date"
+            >
+              <span>{{ day.day }}</span>
+              <span class="habit-day-circle">
+                <CheckIcon v-if="isLogged(habit, day.date)" />
               </span>
-            </template>
+            </span>
           </div>
         </div>
       </article>
@@ -346,7 +343,7 @@ const deleteHabit = (habitId: string) => {
 
 .habit-stamp.logged {
   border-color: var(--accent-color);
-  background: var(--accent-surface);
+  background: var(--selected-surface);
 }
 
 .habit-stamp:disabled {
@@ -429,14 +426,13 @@ const deleteHabit = (habitId: string) => {
 }
 
 .habit-days {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 32px));
+  display: flex;
+  flex-wrap: wrap;
   justify-content: start;
   gap: 0.35rem;
   margin-top: 0.5rem;
 }
 
-.habit-day-placeholder,
 .habit-day {
   width: 32px;
   min-height: 38px;
@@ -473,7 +469,7 @@ const deleteHabit = (habitId: string) => {
 
 .habit-day.logged .habit-day-circle {
   border-color: var(--accent-color);
-  background: var(--accent-surface);
+  background: var(--selected-surface);
   color: #051515;
 }
 
@@ -605,11 +601,9 @@ const deleteHabit = (habitId: string) => {
   }
 
   .habit-days {
-    grid-template-columns: repeat(7, minmax(0, 28px));
     gap: 0.25rem;
   }
 
-  .habit-day-placeholder,
   .habit-day {
     width: 28px;
   }

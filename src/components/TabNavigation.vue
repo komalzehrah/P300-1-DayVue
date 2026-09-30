@@ -123,7 +123,7 @@ type TabName = typeof tabs[number]['name']
 }
 
 .tab.active {
-  background: var(--accent-surface);
+  background: var(--selected-surface);
   color: #000;
   box-shadow: 0 2px 8px rgba(233, 217, 133, 0.2);
 }
@@ -191,7 +191,7 @@ type TabName = typeof tabs[number]['name']
 }
 
 body.light-mode .tab.active {
-  background: var(--accent-surface);
+  background: var(--selected-surface);
   box-shadow: 0 2px 8px rgba(233, 217, 133, 0.2);
 }
 
