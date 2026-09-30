@@ -2,6 +2,7 @@
 
 DayVue is a mobile-friendly web app used for scheduling, task management, and habit tracking for a person with ADHD, who wants to manage their time while also capturing patterns that will allow them to make adjustments based on the metrics from the data they input.
 
+
 ## Recommended IDE Setup
 
 [VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
@@ -40,3 +41,8 @@ npm run dev
 ```sh
 npm run build
 ```
+
+## Status
+
+V 0.1
+Initial Release, styling refinements and additional features and settings to be added in next release

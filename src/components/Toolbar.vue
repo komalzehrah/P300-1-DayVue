@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SunIcon, CogIcon } from '@heroicons/vue/24/outline'
+import { SunIcon, Cog6ToothIcon } from '@heroicons/vue/24/outline'
 
 const emit = defineEmits<{
   'toggle-settings': []
@@ -26,7 +26,7 @@ defineProps<{
         :class="{ active: settingsOpen }"
         aria-label="Settings"
       >
-        <CogIcon />
+        <Cog6ToothIcon />
       </button>
     </div>
   </header>
@@ -115,10 +115,14 @@ body.light-mode .sun-icon {
   color: var(--accent-hover);
 }
 
-.icon-btn.settings-btn,
+.icon-btn.settings-btn {
+  color: var(--text-secondary);
+}
+
 .icon-btn.settings-btn.active,
 .icon-btn.settings-btn:hover {
-  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  color: var(--accent-color);
 }
 
 .cta-container {
