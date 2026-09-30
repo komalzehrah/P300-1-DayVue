@@ -11,9 +11,9 @@ const showSettingsDrawer = ref(false)
 const showNotificationsDrawer = ref(false)
 const showAddModal = ref(false)
 const selectedTab = ref<'Schedule' | 'Tasks' | 'Habits'>('Schedule')
+const scheduleItems = ref<any[]>([])
 
-// Callback ref that will be set by SchedulePage
-const onAddScheduleItem = ref<((data: any) => void) | null>(null)
+provide('scheduleItems', scheduleItems)
 
 const toggleSettings = () => {
   showSettingsDrawer.value = !showSettingsDrawer.value
@@ -34,19 +34,16 @@ const selectTab = (tab: 'Schedule' | 'Tasks' | 'Habits') => {
   else if (tab === 'Habits') router.push('/habits')
 }
 
+const handleAddItem = (item: any) => {
+  if (selectedTab.value === 'Schedule') {
+    scheduleItems.value.push(item)
+  }
+}
+
 const closeDrawers = () => {
   showSettingsDrawer.value = false
   showNotificationsDrawer.value = false
 }
-
-const handleAddScheduleItem = (data: any) => {
-  if (onAddScheduleItem.value) {
-    onAddScheduleItem.value(data)
-  }
-}
-
-// Provide the ref so SchedulePage can set the callback
-provide('onAddScheduleItem', onAddScheduleItem)
 </script>
 
 <template>
@@ -99,7 +96,7 @@ provide('onAddScheduleItem', onAddScheduleItem)
       v-if="showAddModal"
       :active-tab="selectedTab"
       @close="toggleAddModal"
-      @add-schedule-item="handleAddScheduleItem"
+      @add-item="handleAddItem"
     />
   </div>
 </template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, inject, onMounted } from 'vue'
+import { ref, computed, inject } from 'vue'
 import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
 
 interface ScheduleItem {
@@ -7,23 +7,18 @@ interface ScheduleItem {
   time: string
   title: string
   duration: number
-  color: string
-  icon: string
+  frequency?: string
+  icon?: string
+  color?: string
 }
 
-const items = ref<ScheduleItem[]>([])
+const scheduleItems = inject<any>('scheduleItems', ref<ScheduleItem[]>([]))
+const items = computed(() => scheduleItems.value || [])
 const selectedDate = ref<string>(new Date().toISOString().split('T')[0])
 const showDatePicker = ref(false)
 const pickerDate = ref<Date>(new Date(selectedDate.value))
-
-// Inject the callback ref from MainLayout and register our handler
-const onAddScheduleItem = inject<any>('onAddScheduleItem', null)
-
-onMounted(() => {
-  if (onAddScheduleItem) {
-    onAddScheduleItem.value = addScheduleItem
-  }
-})
+const showEditModal = ref(false)
+const selectedItem = ref<ScheduleItem | null>(null)
 
 const hourLabels = computed(() => {
   const labels = []
@@ -120,26 +115,43 @@ const isSelected = (date: Date | null) => {
 
 const getItemStyle = (item: ScheduleItem) => {
   const [hours, minutes] = item.time.split(':').map(Number)
-  const topPixels = (hours * 60 + minutes) // Each minute is 1px, each hour is 60px
-  const heightPixels = Math.max(item.duration, 30) // Minimum height for readability
+  const topOffset = (hours * 60 + minutes)
+  const height = item.duration
   
   return {
-    top: `${topPixels}px`,
-    height: `${heightPixels}px`,
-    backgroundColor: item.color,
+    top: `${topOffset}px`,
+    height: `${height}px`,
+    backgroundColor: item.color || 'var(--accent-color)',
     left: '0.5rem',
     right: '0.5rem'
   }
 }
 
-const addScheduleItem = (itemData: { title: string; time: string; duration: number; color: string; icon: string }) => {
-  const newItem: ScheduleItem = {
-    id: `${Date.now()}-${Math.random()}`,
-    ...itemData
-  }
-  items.value.push(newItem)
+const openEditModal = (item: ScheduleItem) => {
+  selectedItem.value = JSON.parse(JSON.stringify(item))
+  showEditModal.value = true
 }
 
+const closeEditModal = () => {
+  showEditModal.value = false
+  selectedItem.value = null
+}
+
+const updateItem = (updatedItem: ScheduleItem) => {
+  const index = scheduleItems.value.findIndex(item => item.id === updatedItem.id)
+  if (index !== -1) {
+    scheduleItems.value[index] = updatedItem
+  }
+  closeEditModal()
+}
+
+const deleteItem = (itemId: string) => {
+  const index = scheduleItems.value.findIndex(item => item.id === itemId)
+  if (index !== -1) {
+    scheduleItems.value.splice(index, 1)
+  }
+  closeEditModal()
+}
 </script>
 
 <template>
@@ -181,6 +193,9 @@ const addScheduleItem = (itemData: { title: string; time: string; duration: numb
             :key="item.id"
             class="schedule-item"
             :style="getItemStyle(item)"
+            @click="openEditModal(item)"
+            role="button"
+            tabindex="0"
           >
             <strong>{{ item.title }}</strong>
             <small>{{ item.duration }}min</small>
@@ -229,6 +244,56 @@ const addScheduleItem = (itemData: { title: string; time: string; duration: numb
 
       <div class="date-picker-footer">
         <button class="cancel-btn" @click="closeDatePicker">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Edit Item Modal -->
+    <div v-if="showEditModal && selectedItem" class="modal-backdrop" @click="closeEditModal" />
+    <div v-if="showEditModal && selectedItem" class="edit-modal">
+      <div class="modal-header">
+        <h2>Edit Item</h2>
+        <button class="close-btn" @click="closeEditModal">✕</button>
+      </div>
+      <div class="modal-content">
+        <div class="form-group">
+          <label for="edit-title">Title</label>
+          <input
+            id="edit-title"
+            v-model="selectedItem.title"
+            type="text"
+            placeholder="Enter item title"
+          />
+        </div>
+        <div class="form-group">
+          <label for="edit-time">Time</label>
+          <input
+            id="edit-time"
+            v-model="selectedItem.time"
+            type="time"
+          />
+        </div>
+        <div class="form-group">
+          <label for="edit-duration">Duration (minutes)</label>
+          <input
+            id="edit-duration"
+            v-model.number="selectedItem.duration"
+            type="number"
+            min="15"
+            step="15"
+          />
+        </div>
+        <div class="form-actions">
+          <button class="delete-btn" @click="deleteItem(selectedItem.id)">
+            Delete
+          </button>
+          <div style="flex: 1;"></div>
+          <button class="cancel-btn" @click="closeEditModal">
+            Cancel
+          </button>
+          <button class="save-btn" @click="updateItem(selectedItem)">
+            Save
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -427,23 +492,6 @@ const addScheduleItem = (itemData: { title: string; time: string; duration: numb
   gap: 0.75rem;
 }
 
-.cancel-btn {
-  padding: 0.6rem 1.2rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-color);
-  color: var(--text-primary);
-  border-radius: 6px;
-  font-family: 'Livvic', sans-serif;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.cancel-btn:hover {
-  background: var(--bg-tertiary);
-  color: var(--accent-color);
-}
-
 .calendar-wrapper {
   display: flex;
   gap: 0.5rem;
@@ -516,13 +564,25 @@ const addScheduleItem = (itemData: { title: string; time: string; duration: numb
   font-size: 0.8rem;
   overflow: hidden;
   word-break: break-word;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  transition: box-shadow 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  min-height: 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  user-select: none;
 }
 
 .schedule-item:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transform: translateY(-2px) scale(1.02);
+  filter: brightness(1.1);
+}
+
+.schedule-item:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
 }
 
 .schedule-item strong {
@@ -536,6 +596,155 @@ const addScheduleItem = (itemData: { title: string; time: string; duration: numb
   display: block;
   opacity: 0.8;
   font-size: 0.7rem;
+}
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 99;
+}
+
+.edit-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  z-index: 100;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  max-width: 400px;
+  width: calc(100vw - 2rem);
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -45%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h2 {
+  font-family: 'Livvic', sans-serif;
+  font-weight: 600;
+  font-size: 1.3rem;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: color 0.2s ease;
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn:hover {
+  color: var(--accent-color);
+}
+
+.modal-content {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-family: 'Livvic', sans-serif;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.form-group input {
+  padding: 0.75rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'Livvic', sans-serif;
+  font-size: 1rem;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  background: var(--bg-primary);
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  align-items: center;
+}
+
+.delete-btn {
+  padding: 0.6rem 1.2rem;
+  background: #d32f2f;
+  border: none;
+  color: white;
+  border-radius: 6px;
+  font-family: 'Livvic', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.delete-btn:hover {
+  background: #b71c1c;
+  transform: translateY(-1px);
+}
+
+.save-btn {
+  padding: 0.6rem 1.2rem;
+  background: #4caf50;
+  border: none;
+  color: white;
+  border-radius: 6px;
+  font-family: 'Livvic', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.save-btn:hover {
+  background: #388e3c;
+  transform: translateY(-1px);
 }
 </style>
 

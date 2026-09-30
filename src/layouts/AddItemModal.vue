@@ -15,13 +15,12 @@ import {
   CodeBracketIcon
 } from '@heroicons/vue/24/outline'
 
-const props = defineProps<{
+defineProps<{
   activeTab: 'Schedule' | 'Tasks' | 'Habits'
 }>()
 
 const emit = defineEmits<{
   close: []
-  'add-schedule-item': [data: { title: string; time: string; duration: number; color: string; icon: string }]
 }>()
 
 const itemTitle = ref('')
@@ -42,9 +41,8 @@ const scheduleIcons = [
   { name: 'AcademicCapIcon', component: AcademicCapIcon },
   { name: 'TrophyIcon', component: TrophyIcon },
   { name: 'LightBulbIcon', component: LightBulbIcon },
-  { name: 'CakeIcon', component: CakeIcon },
-  { name: 'ChatbubbleIcon', component: ChatbubbleIcon },
-
+  { name: 'UserGroupIcon', component: UserGroupIcon },
+  { name: 'CodeBracketIcon', component: CodeBracketIcon }
 ]
 
 const scheduleColors = [
@@ -60,24 +58,16 @@ const scheduleColors = [
 
 const handleSubmit = () => {
   if (itemTitle.value.trim()) {
-    if (props.activeTab === 'Schedule') {
-      emit('add-schedule-item', {
-        title: itemTitle.value,
-        time: itemTime.value,
-        duration: parseInt(itemDuration.value),
-        color: selectedColor.value,
-        icon: selectedIcon.value
-      })
+    const itemData = {
+      id: Date.now().toString(),
+      title: itemTitle.value,
+      time: itemTime.value,
+      duration: parseInt(itemDuration.value),
+      frequency: itemFrequency.value,
+      icon: selectedIcon.value,
+      color: selectedColor.value
     }
-    
-    // Reset form
-    itemTitle.value = ''
-    itemTime.value = '09:00'
-    itemDuration.value = '30'
-    itemFrequency.value = 'Daily'
-    selectedIcon.value = 'ClockIcon'
-    selectedColor.value = '#e9d985'
-    
+    emit('add-item', itemData)
     emit('close')
   }
 }
