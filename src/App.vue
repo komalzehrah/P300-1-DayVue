@@ -39,6 +39,8 @@ body {
   --border-color: #0f2d2d;
   --accent-color: #e9d985;
   --accent-hover: #dcc968;
+  --accent-surface: #e9d985;
+  --accent-surface-hover: #dcc968;
   font-family: var(--font-body);
 }
 
@@ -51,5 +53,7 @@ body.light-mode {
   --border-color: #d4e8e5;
   --accent-color: #0e8186;
   --accent-hover: #0a6a6d;
+  --accent-surface: #8ed7cf;
+  --accent-surface-hover: #79cfc7;
 }
 </style>

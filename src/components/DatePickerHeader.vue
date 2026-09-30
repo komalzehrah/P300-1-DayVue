@@ -308,7 +308,7 @@ const isSelected = (date: Date | null) => {
 }
 
 .calendar-day.selected {
-  background: var(--accent-color);
+  background: var(--accent-surface);
   color: #000;
 }
 

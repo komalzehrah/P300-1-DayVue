@@ -35,7 +35,32 @@ Generate a fake dataset as a JSON file (src/data/metrics.json).
     -Tasks - with a checklist icon
     -Habits - with a repeat icon
     -Recap - a historical, filterable view of user's progress based on their entries for the other three pages
+    
+-In the mobile view, the navigation will be a bottom nav with a toggle switch with 3 pill-shaped tabs to toggle between the 4 pages. On the right of the toggle switch will be an icon button with a plus icon to allow users to add a new item. 
+  
+-The add item button and icon button will open a modal that allowing users to add a new event, task, or habit based on the page they’re on. 
+
+-Schedule page will have a daily calendar view of 24 hours starting at 12 am and time labels for hourly increments. Include an option to switch from day, week, and month views. 
+    -Adding an item on the schedule will open a modal that allows users to enter the following inputs:
+        -Event title/name
+        -duration with options to quick select preset durations in the following increments: 1, 5, 10, 15, 20, 30, 45, 1h, 1.5h, 2h or add a custom duration from a dropdown.
+        -icon (this will display in a circle on the left side of the event block on the calendar)
+        -color (for the event block on the calendar)
+
+-Tasks page: tasks will display in a stacked list of cards with a circle on the far left that when clicked will mark the task as done. completed task pills will have a desaturated color and a strikethrough on the task title. 
+    -Adding an item modal inputs:
+        -Task name
+        -Priority (low, medium, high)
+        -Progress (not started, in progress, done)
+    -Entered tasks should be editable to update the name, priority, and progress, or to delete them altogether. 
+    -Tasks page should include a sort by dropdown to allow sorting by priority or by progress. colored chips will display on the cards for priority and progress levels. tapping on the chips will allow the user to edit the levels.
+
+
 
 ## Style
 -Use Google font Outfit Medium 500 as the logo and button font
 -Use Google font Syne Regular 400 for all other type. 
+-Dark mode by default with a light/dark toggle button in the Settings drawer.
+-Use a color palette with a very dark teal, a very pale yellow for navigation buttons and tabs, and a bright peach for call to action buttons. Ensure that dark and light mode palettes work inversely and maintain accessibilty standards for color contrast.
+-Mobile-responsive, with cards stacking on top of each other in the dashboard view. 
+-Any charts or highlighted data elements should use a cohesive color palette that works with the color palette established above.

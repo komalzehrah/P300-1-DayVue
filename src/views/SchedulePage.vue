@@ -1,8 +1,24 @@
 <script setup lang="ts">
-import { ref, computed, inject, type Ref } from 'vue'
+import { ref, computed, inject, type Component, type Ref } from 'vue'
+import AddItemModal from '../components/AddItemModal.vue'
+import {
+  ClockIcon,
+  CalendarIcon,
+  CheckCircleIcon,
+  StarIcon,
+  HeartIcon,
+  BoltIcon,
+  SparklesIcon,
+  AcademicCapIcon,
+  TrophyIcon,
+  LightBulbIcon,
+  UserGroupIcon,
+  CodeBracketIcon
+} from '@heroicons/vue/24/outline'
 
 interface ScheduleItem {
   id: string
+  date?: string
   time: string
   title: string
   duration: number
@@ -11,10 +27,26 @@ interface ScheduleItem {
   color?: string
 }
 
+const scheduleIcons: Record<string, Component> = {
+  ClockIcon,
+  CalendarIcon,
+  CheckCircleIcon,
+  StarIcon,
+  HeartIcon,
+  BoltIcon,
+  SparklesIcon,
+  AcademicCapIcon,
+  TrophyIcon,
+  LightBulbIcon,
+  UserGroupIcon,
+  CodeBracketIcon
+}
+
+const getScheduleIcon = (name?: string) => scheduleIcons[name ?? 'ClockIcon'] ?? ClockIcon
+
 type CalendarView = 'daily' | 'weekly' | 'monthly'
 
-const scheduleItems = inject<any>('scheduleItems', ref<ScheduleItem[]>([]))
-const items = computed(() => scheduleItems.value || [])
+const scheduleItems = inject<Ref<ScheduleItem[]>>('scheduleItems', ref<ScheduleItem[]>([]))
 const today = new Date()
 const selectedDate = inject<Ref<string>>(
   'selectedDate',
@@ -78,7 +110,8 @@ const selectCalendarDate = (date: Date) => {
   selectedDate.value = formatDate(date)
 }
 
-const itemsForDate = (date: Date) => items.value.filter((item: ScheduleItem) => {
+const itemsForDate = (date: Date) => scheduleItems.value.filter((item: ScheduleItem) => {
+  if (item.date) return item.date === formatDate(date)
   const frequency = (item.frequency || 'daily').toLowerCase()
   if (frequency === 'weekly') {
     return date.getDay() === parseDate(selectedDate.value).getDay()
@@ -88,6 +121,8 @@ const itemsForDate = (date: Date) => items.value.filter((item: ScheduleItem) => 
   }
   return true
 })
+
+const items = computed(() => itemsForDate(parseDate(selectedDate.value)))
 
 const formatTime = (time: string) => {
   const [hours = 0, minutes = 0] = time.split(':').map(Number)
@@ -125,14 +160,14 @@ const timeSlots = computed(() => {
 })
 
 const getItemStyle = (item: ScheduleItem) => {
-  const [hours, minutes] = item.time.split(':').map(Number)
+  const [hours = 0, minutes = 0] = item.time.split(':').map(Number)
   const topOffset = (hours * 60 + minutes)
   const height = item.duration
   
   return {
     top: `${topOffset}px`,
     height: `${height}px`,
-    backgroundColor: item.color || 'var(--accent-color)',
+    backgroundColor: item.color || 'var(--accent-surface)',
     left: '0.5rem',
     right: '0.5rem'
   }
@@ -148,11 +183,10 @@ const closeEditModal = () => {
   selectedItem.value = null
 }
 
-const updateItem = (updatedItem: ScheduleItem) => {
+const updateItem = (updatedItem: Pick<ScheduleItem, 'id' | 'title'> & Partial<ScheduleItem>) => {
   const index = scheduleItems.value.findIndex(item => item.id === updatedItem.id)
-  if (index !== -1) {
-    scheduleItems.value[index] = updatedItem
-  }
+  const existingItem = scheduleItems.value[index]
+  if (existingItem) scheduleItems.value[index] = { ...existingItem, ...updatedItem }
   closeEditModal()
 }
 
@@ -206,13 +240,19 @@ const deleteItem = (itemId: string) => {
             v-for="item in items"
             :key="item.id"
             class="schedule-item"
+            :class="{ 'compact-event': item.duration < 45 }"
             :style="getItemStyle(item)"
             @click="openEditModal(item)"
             role="button"
             tabindex="0"
           >
-            <strong>{{ item.title }}</strong>
-            <small>{{ item.duration }}min</small>
+            <span class="event-icon">
+              <component :is="getScheduleIcon(item.icon)" />
+            </span>
+            <span class="event-copy">
+              <strong>{{ item.title }}</strong>
+              <small>{{ item.duration }}min</small>
+            </span>
           </div>
         </div>
       </div>
@@ -233,11 +273,14 @@ const deleteItem = (itemId: string) => {
             v-for="item in itemsForDate(day)"
             :key="item.id"
             class="week-event"
-            :style="{ '--event-color': item.color || 'var(--accent-color)' }"
+            :style="{ '--event-color': item.color || 'var(--accent-surface)' }"
             @click="openEditModal(item)"
           >
+            <span class="week-event-icon">
+              <component :is="getScheduleIcon(item.icon)" />
+            </span>
             <time>{{ formatTime(item.time) }}</time>
-            <span>{{ item.title }}</span>
+            <span class="week-event-title">{{ item.title }}</span>
           </button>
           <span v-if="itemsForDate(day).length === 0" class="no-events">No items</span>
         </div>
@@ -267,7 +310,7 @@ const deleteItem = (itemId: string) => {
             v-for="item in itemsForDate(day).slice(0, 3)"
             :key="item.id"
             class="month-event"
-            :style="{ '--event-color': item.color || 'var(--accent-color)' }"
+            :style="{ '--event-color': item.color || 'var(--accent-surface)' }"
             :title="`${formatTime(item.time)} ${item.title}`"
             @click="openEditModal(item)"
           >
@@ -282,61 +325,22 @@ const deleteItem = (itemId: string) => {
       </div>
     </div>
 
-    <!-- Edit Item Modal -->
-    <div v-if="showEditModal && selectedItem" class="modal-backdrop" @click="closeEditModal" />
-    <div v-if="showEditModal && selectedItem" class="edit-modal">
-      <div class="modal-header">
-        <h2>Edit Item</h2>
-        <button class="close-btn" @click="closeEditModal">✕</button>
-      </div>
-      <div class="modal-content">
-        <div class="form-group">
-          <label for="edit-title">Title</label>
-          <input
-            id="edit-title"
-            v-model="selectedItem.title"
-            type="text"
-            placeholder="Enter item title"
-          />
-        </div>
-        <div class="form-group">
-          <label for="edit-time">Time</label>
-          <input
-            id="edit-time"
-            v-model="selectedItem.time"
-            type="time"
-          />
-        </div>
-        <div class="form-group">
-          <label for="edit-duration">Duration (minutes)</label>
-          <input
-            id="edit-duration"
-            v-model.number="selectedItem.duration"
-            type="number"
-            min="15"
-            step="15"
-          />
-        </div>
-        <div class="form-actions">
-          <button class="delete-btn" @click="deleteItem(selectedItem.id)">
-            Delete
-          </button>
-          <div style="flex: 1;"></div>
-          <button class="cancel-btn" @click="closeEditModal">
-            Cancel
-          </button>
-          <button class="save-btn" @click="updateItem(selectedItem)">
-            Save
-          </button>
-        </div>
-      </div>
-    </div>
+    <!-- Edit Event Modal -->
+    <AddItemModal
+      v-if="showEditModal && selectedItem"
+      active-tab="Schedule"
+      mode="edit"
+      :item="selectedItem"
+      @close="closeEditModal"
+      @save-item="updateItem"
+      @delete-item="deleteItem"
+    />
   </div>
 </template>
 
 <style scoped>
 .schedule-container {
-  padding: 1rem;
+  padding: 0.5rem 1rem 1rem;
   overflow-y: auto;
   height: calc(100vh - 180px);
   background: var(--bg-primary);
@@ -380,7 +384,7 @@ const deleteItem = (itemId: string) => {
 }
 
 .view-option.active {
-  background: var(--accent-color);
+  background: var(--accent-surface);
   color: #000;
 }
 
@@ -432,7 +436,7 @@ const deleteItem = (itemId: string) => {
 
 .week-day-heading.selected,
 .week-day-heading.selected strong {
-  background: var(--accent-color);
+  background: var(--accent-surface);
   color: #000;
 }
 
@@ -446,7 +450,7 @@ const deleteItem = (itemId: string) => {
 
 .week-event {
   display: grid;
-  grid-template-columns: 66px minmax(0, 1fr);
+  grid-template-columns: 20px 66px minmax(0, 1fr);
   gap: 0.5rem;
   align-items: center;
   min-height: 36px;
@@ -467,6 +471,27 @@ const deleteItem = (itemId: string) => {
   font-family: var(--font-ui);
   font-size: 0.72rem;
   white-space: nowrap;
+}
+
+.week-event-icon,
+.month-event-icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--event-color);
+  color: #051515;
+}
+
+.week-event-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.week-event-icon :deep(svg) {
+  width: 12px;
+  height: 12px;
+  stroke-width: 2;
 }
 
 .week-event span {
@@ -528,7 +553,7 @@ const deleteItem = (itemId: string) => {
 }
 
 .month-date.selected {
-  background: var(--accent-color);
+  background: var(--accent-surface);
   color: #000;
 }
 
@@ -541,7 +566,7 @@ const deleteItem = (itemId: string) => {
 
 .month-event {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr);
+  grid-template-columns: 16px 48px minmax(0, 1fr);
   gap: 0.2rem;
   min-width: 0;
   padding: 0.2rem 0.25rem;
@@ -554,6 +579,17 @@ const deleteItem = (itemId: string) => {
   cursor: pointer;
   font-size: 0.65rem;
   text-align: left;
+}
+
+.month-event-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.month-event-icon :deep(svg) {
+  width: 10px;
+  height: 10px;
+  stroke-width: 2;
 }
 
 .month-event-time,
@@ -741,7 +777,7 @@ const deleteItem = (itemId: string) => {
 }
 
 .calendar-day.selected {
-  background: var(--accent-color);
+  background: var(--accent-surface);
   color: #000;
   font-weight: 600;
 }
@@ -837,11 +873,18 @@ const deleteItem = (itemId: string) => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   min-height: 2rem;
   display: flex;
-  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
   justify-content: flex-start;
   transition: all 0.2s ease;
   cursor: pointer;
   user-select: none;
+}
+
+.schedule-item.compact-event {
+  align-items: center;
+  padding-top: 0.125rem;
+  padding-bottom: 0.125rem;
 }
 
 .schedule-item:hover {
@@ -862,165 +905,68 @@ const deleteItem = (itemId: string) => {
   margin-bottom: 0.25rem;
 }
 
+.schedule-item.compact-event strong {
+  margin-bottom: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.event-icon {
+  display: grid;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.compact-event .event-icon {
+  flex-basis: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.compact-event .event-icon :deep(svg) {
+  width: 14px;
+  height: 14px;
+}
+
+.event-icon :deep(svg) {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+.event-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.schedule-item.compact-event .event-copy {
+  align-items: center;
+  flex-direction: row;
+  gap: 0.35rem;
+  overflow: hidden;
+}
+
+.schedule-item.compact-event small {
+  flex: 0 0 auto;
+}
+
 .schedule-item small {
   display: block;
   opacity: 0.8;
   font-size: 0.7rem;
 }
 
-.modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
-  z-index: 99;
-}
-
-.edit-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  z-index: 100;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-  max-width: 400px;
-  width: calc(100vw - 2rem);
-  animation: modalSlideIn 0.3s ease;
-}
-
-@keyframes modalSlideIn {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -45%);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%);
-  }
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.modal-header h2 {
-  font-family: var(--font-body);
-  font-weight: 600;
-  font-size: 1.3rem;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: var(--text-primary);
-  transition: color 0.2s ease;
-  padding: 0;
-  width: 2rem;
-  height: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.close-btn:hover {
-  color: var(--accent-color);
-}
-
-.modal-content {
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.form-group label {
-  font-family: var(--font-body);
-  font-weight: 600;
-  color: var(--text-primary);
-  font-size: 0.95rem;
-}
-
-.form-group input {
-  padding: 0.75rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  color: var(--text-primary);
-  font-family: var(--font-body);
-  font-size: 1rem;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
-}
-
-.form-group input:focus {
-  outline: none;
-  border-color: var(--accent-color);
-  background: var(--bg-primary);
-}
-
-.form-actions {
-  display: flex;
-  gap: 0.75rem;
-  margin-top: 1rem;
-  align-items: center;
-}
-
-.delete-btn {
-  padding: 0.6rem 1.2rem;
-  background: #d32f2f;
-  border: none;
-  color: white;
-  border-radius: 6px;
-  font-family: var(--font-ui);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.delete-btn:hover {
-  background: #b71c1c;
-  transform: translateY(-1px);
-}
-
-.save-btn {
-  padding: 0.6rem 1.2rem;
-  background: #4caf50;
-  border: none;
-  color: white;
-  border-radius: 6px;
-  font-family: var(--font-ui);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.save-btn:hover {
-  background: #388e3c;
-  transform: translateY(-1px);
-}
-
 @media (min-width: 481px) {
   .schedule-container {
     height: 100%;
-    padding: 1.5rem;
+    padding: 0.75rem 1.5rem 1.5rem;
   }
 
   .time-labels {
@@ -1030,7 +976,7 @@ const deleteItem = (itemId: string) => {
 
 @media (min-width: 768px) {
   .schedule-container {
-    padding: 2rem 2.5rem;
+    padding: 1rem 2.5rem 2rem;
   }
 
   .time-labels {
@@ -1073,10 +1019,20 @@ const deleteItem = (itemId: string) => {
   }
 
   .week-event {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: 18px minmax(0, 1fr);
     gap: 0.2rem;
     padding: 0.4rem;
     font-size: 0.72rem;
+  }
+
+  .week-event-icon {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+
+  .week-event time,
+  .week-event-title {
+    grid-column: 2;
   }
 
   .month-cell {
@@ -1119,6 +1075,7 @@ const deleteItem = (itemId: string) => {
 
   .month-event-time,
   .month-event-title,
+  .month-event-icon,
   .more-events {
     display: none;
   }

@@ -5,16 +5,19 @@ import {
   ClipboardDocumentCheckIcon,
   ArrowPathIcon,
   ClockIcon,
+  Cog6ToothIcon,
   PlusIcon
 } from '@heroicons/vue/24/outline'
 
 defineProps<{
   selectedTab: 'Schedule' | 'Tasks' | 'Habits' | 'Recap'
+  settingsOpen: boolean
 }>()
 
 const emit = defineEmits<{
   'select-tab': [tab: 'Schedule' | 'Tasks' | 'Habits' | 'Recap']
   'toggle-add': []
+  'toggle-settings': []
 }>()
 
 const tabs = [
@@ -48,6 +51,18 @@ type TabName = typeof tabs[number]['name']
       <PlusIcon />
       <span class="add-label">Add item</span>
     </button>
+
+    <div class="settings-footer">
+      <button
+        class="settings-button"
+        :class="{ active: settingsOpen }"
+        aria-label="Settings"
+        @click="$emit('toggle-settings')"
+      >
+        <Cog6ToothIcon />
+        <span>Settings</span>
+      </button>
+    </div>
   </nav>
 </template>
 
@@ -108,7 +123,7 @@ type TabName = typeof tabs[number]['name']
 }
 
 .tab.active {
-  background: var(--accent-color);
+  background: var(--accent-surface);
   color: #000;
   box-shadow: 0 2px 8px rgba(233, 217, 133, 0.2);
 }
@@ -143,6 +158,10 @@ type TabName = typeof tabs[number]['name']
   display: none;
 }
 
+.settings-footer {
+  display: none;
+}
+
 @media (min-width: 768px) {
   .mobile-add {
     display: none;
@@ -172,7 +191,7 @@ type TabName = typeof tabs[number]['name']
 }
 
 body.light-mode .tab.active {
-  background: #e9d985;
+  background: var(--accent-surface);
   box-shadow: 0 2px 8px rgba(233, 217, 133, 0.2);
 }
 
@@ -227,6 +246,44 @@ body.light-mode .tab.active {
 
   .tab-label {
     display: inline;
+  }
+
+  .settings-footer {
+    display: block;
+    margin-top: auto;
+    padding: 1rem 0.25rem 0;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .settings-button {
+    display: flex;
+    width: 100%;
+    min-height: 44px;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 1rem;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: var(--font-ui);
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-align: left;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  .settings-button:hover,
+  .settings-button.active {
+    background: var(--bg-tertiary);
+    color: var(--accent-color);
+  }
+
+  .settings-button :deep(svg) {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 auto;
   }
 }
 

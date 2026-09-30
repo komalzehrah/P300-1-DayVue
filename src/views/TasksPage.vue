@@ -1,55 +1,200 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, inject, ref, type Ref } from 'vue'
+import { CheckIcon, PencilSquareIcon } from '@heroicons/vue/24/outline'
+import AddItemModal from '../components/AddItemModal.vue'
 
-const tasks = ref<Array<{ id: string; title: string; completed: boolean }>>([])
+type TaskPriority = 'low' | 'medium' | 'high'
+type TaskProgress = 'not-started' | 'in-progress' | 'done'
 
-const toggleTask = (id: string) => {
-  const task = tasks.value.find(t => t.id === id)
-  if (task) {
-    task.completed = !task.completed
-  }
+interface Task {
+  id: string
+  date?: string
+  title: string
+  priority: TaskPriority
+  progress: TaskProgress
+  repeat: boolean
+  repeatFrequency?: 'daily' | 'weekly' | 'custom'
+  repeatInterval?: number
 }
 
-const addTask = (title: string) => {
-  tasks.value.push({
-    id: Date.now().toString(),
-    title,
-    completed: false
-  })
+interface TaskEditPayload {
+  id: string
+  title: string
+  priority?: TaskPriority
+  progress?: TaskProgress
+  repeat?: boolean
+  repeatFrequency?: 'daily' | 'weekly' | 'custom'
+  repeatInterval?: number
+}
+
+const tasks = inject<Ref<Task[]>>('tasks', ref<Task[]>([]))
+const selectedDate = inject<Ref<string>>('selectedDate', ref(''))
+const sortBy = ref<'priority' | 'progress'>('priority')
+const editedTask = ref<Task | null>(null)
+
+const priorityOrder: Record<TaskPriority, number> = { high: 0, medium: 1, low: 2 }
+const progressOrder: Record<TaskProgress, number> = { 'not-started': 0, 'in-progress': 1, done: 2 }
+
+const visibleTasks = computed(() => tasks.value.filter(task => !task.date || task.date === selectedDate.value))
+
+const sortedTasks = computed(() => [...visibleTasks.value].sort((first, second) => {
+  if (sortBy.value === 'priority') {
+    return priorityOrder[first.priority] - priorityOrder[second.priority]
+      || progressOrder[first.progress] - progressOrder[second.progress]
+  }
+  return progressOrder[first.progress] - progressOrder[second.progress]
+    || priorityOrder[first.priority] - priorityOrder[second.priority]
+}))
+
+const toggleTask = (id: string) => {
+  const task = tasks.value.find(task => task.id === id)
+  if (task) task.progress = task.progress === 'done' ? 'not-started' : 'done'
+}
+
+const editTask = (task: Task) => {
+  editedTask.value = { ...task }
+}
+
+const closeEditor = () => {
+  editedTask.value = null
+}
+
+const saveTask = (updatedTask: TaskEditPayload) => {
+  const index = tasks.value.findIndex(task => task.id === updatedTask.id)
+  const existingTask = tasks.value[index]
+  if (existingTask) {
+    tasks.value[index] = {
+      ...existingTask,
+      title: updatedTask.title,
+      priority: updatedTask.priority ?? existingTask.priority,
+      progress: updatedTask.progress ?? existingTask.progress,
+      repeat: updatedTask.repeat ?? existingTask.repeat,
+      repeatFrequency: updatedTask.repeat ? updatedTask.repeatFrequency : undefined,
+      repeatInterval: updatedTask.repeat && updatedTask.repeatFrequency === 'custom'
+        ? updatedTask.repeatInterval
+        : undefined
+    }
+  }
+  closeEditor()
+}
+
+const deleteTask = (taskId: string) => {
+  const index = tasks.value.findIndex(task => task.id === taskId)
+  if (index !== -1) tasks.value.splice(index, 1)
+  closeEditor()
 }
 </script>
 
 <template>
   <div class="tasks-container">
-    <div class="tasks-list">
-      <div v-if="tasks.length === 0" class="empty-state">
-        <p>No tasks yet. Add one to get started!</p>
-      </div>
-      <div v-for="task in tasks" :key="task.id" class="task-item">
-        <input
-          type="checkbox"
-          :checked="task.completed"
-          @change="toggleTask(task.id)"
-          class="task-checkbox"
-        />
-        <span :class="{ completed: task.completed }">{{ task.title }}</span>
-      </div>
+    <header class="tasks-toolbar">
+      <h1>Daily Tasks</h1>
+      <label class="sort-control" for="task-sort">
+        <span>Sort by</span>
+        <select id="task-sort" v-model="sortBy">
+          <option value="priority">Priority</option>
+          <option value="progress">Progress</option>
+        </select>
+      </label>
+    </header>
+
+    <div v-if="visibleTasks.length === 0" class="empty-state">
+      <p>No tasks yet. Add one to get started!</p>
     </div>
+    <div v-else class="tasks-list">
+      <article
+        v-for="task in sortedTasks"
+        :key="task.id"
+        class="task-pill"
+        :class="{ completed: task.progress === 'done' }"
+      >
+        <button
+          class="task-toggle"
+          :class="{ checked: task.progress === 'done' }"
+          :aria-label="task.progress === 'done' ? `Mark ${task.title} not done` : `Mark ${task.title} done`"
+          @click="toggleTask(task.id)"
+        >
+          <CheckIcon v-if="task.progress === 'done'" />
+        </button>
+        <div class="task-copy">
+          <span class="task-title">{{ task.title }}</span>
+          <div class="task-chips">
+            <button class="task-chip priority-chip" :class="`priority-${task.priority}`" @click="editTask(task)">
+              {{ task.priority }} priority
+            </button>
+            <button class="task-chip progress-chip" :class="`progress-${task.progress}`" @click="editTask(task)">
+              {{ task.progress.replace('-', ' ') }}
+            </button>
+          </div>
+        </div>
+        <button class="edit-task" :aria-label="`Edit ${task.title}`" title="Edit task" @click="editTask(task)">
+          <PencilSquareIcon />
+        </button>
+      </article>
+    </div>
+
+    <AddItemModal
+      v-if="editedTask"
+      active-tab="Tasks"
+      mode="edit"
+      :item="editedTask"
+      @close="closeEditor"
+      @save-item="saveTask"
+      @delete-item="deleteTask"
+    />
   </div>
 </template>
 
 <style scoped>
 .tasks-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
   padding: 1rem;
   overflow-y: auto;
   height: 100%;
   min-height: 0;
 }
 
+.tasks-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.tasks-toolbar h1 {
+  margin: 0;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 1.2rem;
+  font-weight: 400;
+}
+
+.sort-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+}
+
+.sort-control select {
+  min-height: 38px;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+}
+
 .tasks-list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
   min-height: 100%;
 }
 
@@ -63,35 +208,136 @@ const addTask = (title: string) => {
   padding: 2rem 1rem;
 }
 
-.task-item {
+.task-pill {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1rem;
+  gap: 0.75rem;
+  min-height: 64px;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--border-color);
   background: var(--bg-secondary);
-  border-radius: 8px;
-  transition: background 0.2s ease;
+  border-radius: 999px;
+  transition: background 0.2s ease, border-color 0.2s ease;
 }
 
-.task-item:hover {
+.task-pill:hover {
   background: var(--bg-tertiary);
 }
 
-.task-checkbox {
-  width: 20px;
-  height: 20px;
+.task-pill.completed {
+  border-color: transparent;
+  background: #10201e;
+}
+
+.task-toggle {
+  display: grid;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 2px solid var(--text-secondary);
+  border-radius: 50%;
+  background: transparent;
+  color: #051515;
   cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.task-toggle.checked {
+  border-color: var(--accent-color);
+  background: var(--accent-surface);
+}
+
+.task-toggle :deep(svg) {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2.5;
+}
+
+.task-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+.task-title {
+  flex: 1;
+  word-break: break-word;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+}
+
+.task-pill.completed .task-title {
+  text-decoration: line-through;
+  color: var(--text-secondary);
+}
+
+.task-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.task-chip {
+  min-height: 24px;
+  padding: 0.25rem 0.55rem;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.priority-high { background: rgba(255, 140, 105, 0.18); color: #ff9b7f; }
+.priority-medium { background: rgba(233, 217, 133, 0.18); color: var(--accent-color); }
+.priority-low { background: rgba(79, 188, 174, 0.18); color: #71d0c4; }
+.progress-not-started { background: var(--bg-tertiary); color: var(--text-secondary); }
+.progress-in-progress { background: rgba(148, 174, 224, 0.18); color: #a9c0ef; }
+.progress-done { background: rgba(79, 188, 174, 0.14); color: #71d0c4; }
+
+.edit-repeat-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+}
+
+.edit-repeat-toggle input {
+  width: 18px;
+  height: 18px;
   accent-color: var(--accent-color);
 }
 
-.task-item span {
-  flex: 1;
-  word-break: break-word;
+.edit-task {
+  display: grid;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
 }
 
-.task-item span.completed {
-  text-decoration: line-through;
-  color: var(--text-secondary);
+.edit-task:hover {
+  background: var(--bg-primary);
+  color: var(--accent-color);
+}
+
+.edit-task :deep(svg) {
+  width: 19px;
+  height: 19px;
 }
 
 @media (min-width: 481px) {
@@ -107,19 +353,35 @@ const addTask = (title: string) => {
   }
 
   .tasks-list {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1.25rem;
-    max-width: 1200px;
+    width: 100%;
+    max-width: 960px;
     margin: 0 auto;
   }
 
-  .empty-state {
-    grid-column: 1 / -1;
+  .task-pill {
+    min-height: 72px;
+  }
+}
+
+body.light-mode .task-pill.completed {
+  background: #e5eeeb;
+}
+
+@media (max-width: 420px) {
+  .tasks-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
-  .task-item {
-    min-height: 72px;
+  .task-pill {
+    align-items: flex-start;
+    border-radius: 20px;
+  }
+
+  .task-copy {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 </style>

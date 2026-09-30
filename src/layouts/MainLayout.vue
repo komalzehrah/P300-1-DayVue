@@ -1,17 +1,18 @@
 <script setup lang="ts">
 import { computed, reactive, ref, provide } from 'vue'
 import { useRouter } from 'vue-router'
-import DatePickerHeader from './DatePickerHeader.vue'
-import DashboardDateRangePicker from './DashboardDateRangePicker.vue'
-import Toolbar from './Toolbar.vue'
-import TabNavigation from './TabNavigation.vue'
-import SettingsDrawer from './SettingsDrawer.vue'
-import AddItemModal from './AddItemModal.vue'
+import DatePickerHeader from '../components/DatePickerHeader.vue'
+import DashboardDateRangePicker from '../components/DashboardDateRangePicker.vue'
+import Toolbar from '../components/Toolbar.vue'
+import TabNavigation from '../components/TabNavigation.vue'
+import SettingsDrawer from '../components/SettingsDrawer.vue'
+import AddItemModal from '../components/AddItemModal.vue'
+import { sampleHabits, sampleScheduleItems, sampleTasks, type DatedHabit, type DatedScheduleItem, type DatedTask } from '../data/fakeEntries'
 
 const router = useRouter()
 type NavigationPage = 'Schedule' | 'Tasks' | 'Habits' | 'Recap'
+
 const showSettingsDrawer = ref(false)
-const showNotificationsDrawer = ref(false)
 const showAddModal = ref(false)
 const selectedTab = computed<NavigationPage>(() => {
   const routeName = router.currentRoute.value.name
@@ -22,18 +23,18 @@ const selectedDate = ref(
   `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
 )
 const dashboardDateRange = reactive({ startDate: '2026-03-01', endDate: '2026-07-31' })
-const scheduleItems = ref<any[]>([])
+const scheduleItems = ref<DatedScheduleItem[]>([...sampleScheduleItems])
+const tasks = ref<DatedTask[]>([...sampleTasks])
+const habits = ref<DatedHabit[]>([...sampleHabits])
 
 provide('scheduleItems', scheduleItems)
 provide('selectedDate', selectedDate)
 provide('dashboardDateRange', dashboardDateRange)
+provide('tasks', tasks)
+provide('habits', habits)
 
 const toggleSettings = () => {
   showSettingsDrawer.value = !showSettingsDrawer.value
-}
-
-const toggleNotifications = () => {
-  showNotificationsDrawer.value = !showNotificationsDrawer.value
 }
 
 const toggleAddModal = () => {
@@ -51,14 +52,38 @@ const selectTab = (tab: NavigationPage) => {
 }
 
 const handleAddItem = (item: any) => {
+  if (selectedTab.value === 'Tasks') {
+    tasks.value.push({
+      id: item.id,
+      title: item.title,
+      priority: item.priority ?? 'medium',
+      progress: item.progress ?? 'not-started',
+      repeat: item.repeat ?? false,
+      repeatFrequency: item.repeatFrequency,
+      repeatInterval: item.repeatInterval,
+      date: selectedDate.value
+    })
+    return
+  }
+
+  if (selectedTab.value === 'Habits') {
+    habits.value.push({
+      id: item.id,
+      date: selectedDate.value,
+      title: item.title,
+      frequency: item.frequency ?? 'Daily',
+      completed: false
+    })
+    return
+  }
+
   if (selectedTab.value === 'Schedule' || selectedTab.value === 'Recap') {
-    scheduleItems.value.push(item)
+    scheduleItems.value.push({ ...item, date: selectedDate.value })
   }
 }
 
-const closeDrawers = () => {
+const closeSettings = () => {
   showSettingsDrawer.value = false
-  showNotificationsDrawer.value = false
 }
 </script>
 
@@ -67,15 +92,15 @@ const closeDrawers = () => {
     <aside class="sidebar">
       <Toolbar
         @toggle-settings="toggleSettings"
-        @toggle-notifications="toggleNotifications"
-        :notifications-open="showNotificationsDrawer"
         :settings-open="showSettingsDrawer"
       />
 
       <TabNavigation
         :selected-tab="selectedTab"
+        :settings-open="showSettingsDrawer"
         @select-tab="selectTab"
         @toggle-add="toggleAddModal"
+        @toggle-settings="toggleSettings"
       />
     </aside>
 
@@ -99,21 +124,8 @@ const closeDrawers = () => {
     <!-- Drawers -->
     <SettingsDrawer
       v-if="showSettingsDrawer"
-      @close="closeDrawers"
+      @close="closeSettings"
     />
-
-    <div
-      v-if="showNotificationsDrawer"
-      class="notifications-drawer"
-    >
-      <div class="drawer-header">
-        <h2>Notifications</h2>
-        <button @click="toggleNotifications" class="close-btn">✕</button>
-      </div>
-      <div class="drawer-content">
-        <p style="color: var(--text-secondary);">No new notifications</p>
-      </div>
-    </div>
 
     <!-- Modal Backdrop -->
     <div
@@ -170,54 +182,6 @@ const closeDrawers = () => {
   z-index: 99;
 }
 
-.notifications-drawer {
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 100%;
-  max-width: 300px;
-  height: 100%;
-  background: var(--bg-secondary);
-  border-left: 1px solid var(--border-color);
-  z-index: 101;
-  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
-  display: flex;
-  flex-direction: column;
-}
-
-.drawer-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.drawer-header h2 {
-  font-family: var(--font-body);
-  font-weight: 600;
-  font-size: 1.2rem;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: var(--text-primary);
-  transition: color 0.2s ease;
-}
-
-.close-btn:hover {
-  color: var(--accent-color);
-}
-
-.drawer-content {
-  flex: 1;
-  padding: 1rem;
-  overflow-y: auto;
-}
-
 @media (max-width: 767px) {
   .sidebar :deep(.tab-navigation) {
     position: fixed;
@@ -258,17 +222,17 @@ const closeDrawers = () => {
 
   .sidebar :deep(.toolbar) {
     height: auto;
-    min-height: 128px;
+    min-height: 88px;
     flex-direction: column;
     align-items: stretch;
-    justify-content: space-between;
-    gap: 1.5rem;
+    justify-content: center;
+    gap: 1rem;
     padding: 1.25rem 1rem;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 0;
   }
 
   .sidebar :deep(.toolbar-right) {
-    justify-content: flex-start;
+    display: none;
   }
 
   .sidebar :deep(.tab-navigation) {

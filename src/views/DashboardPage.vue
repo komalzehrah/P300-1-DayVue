@@ -221,7 +221,7 @@ const formatHighlightDate = (value: string) =>
   <div class="dashboard-page">
     <header class="dashboard-heading">
       <div>
-        <p class="dashboard-kicker">OVERVIEW</p>
+        <p class="dashboard-kicker">Overview</p>
         <h1>Recap</h1>
       </div>
     </header>
@@ -252,7 +252,7 @@ const formatHighlightDate = (value: string) =>
     <section class="dashboard-grid" aria-label="Progress trends">
       <article class="chart-panel habit-panel">
         <div class="panel-heading">
-          <h2>Habit consistency</h2>
+          <h2>Habit Consistency</h2>
           <span>Monthly goal completion</span>
         </div>
         <div class="chart-area habit-chart">
@@ -262,7 +262,7 @@ const formatHighlightDate = (value: string) =>
 
       <article class="chart-panel task-panel">
         <div class="panel-heading">
-          <h2>Task follow-through</h2>
+          <h2>Task Follow-Through</h2>
           <span>Daily and one-off tasks</span>
         </div>
         <div class="chart-area task-chart">
@@ -273,7 +273,7 @@ const formatHighlightDate = (value: string) =>
 
     <section class="highlights-section">
       <div class="panel-heading">
-          <h2>{{ highlightMonth }}, outside work</h2>
+          <h2>{{ highlightMonth }}, Outside Work</h2>
         <span>Family and social commitments</span>
       </div>
       <ul class="highlights-list">

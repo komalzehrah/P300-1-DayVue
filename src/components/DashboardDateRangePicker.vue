@@ -199,7 +199,7 @@ const applyRange = () => {
 
 .apply-range {
   border-color: var(--accent-color);
-  background: var(--accent-color);
+  background: var(--accent-surface);
   color: #000;
 }
 

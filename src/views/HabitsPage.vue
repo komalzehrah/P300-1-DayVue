@@ -1,32 +1,31 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, inject, ref, type Ref } from 'vue'
 
-const habits = ref<Array<{ id: string; title: string; frequency: string; completed: boolean }>>([])
-
-const toggleHabit = (id: string) => {
-  const habit = habits.value.find(h => h.id === id)
-  if (habit) {
-    habit.completed = !habit.completed
-  }
+interface Habit {
+  id: string
+  date?: string
+  title: string
+  frequency: string
+  completed: boolean
 }
 
-const addHabit = (title: string, frequency: string) => {
-  habits.value.push({
-    id: Date.now().toString(),
-    title,
-    frequency,
-    completed: false
-  })
+const habits = inject<Ref<Habit[]>>('habits', ref<Habit[]>([]))
+const selectedDate = inject<Ref<string>>('selectedDate', ref(''))
+const dailyHabits = computed(() => habits.value.filter(habit => !habit.date || habit.date === selectedDate.value))
+
+const toggleHabit = (id: string) => {
+  const habit = habits.value.find(habit => habit.id === id)
+  if (habit) habit.completed = !habit.completed
 }
 </script>
 
 <template>
   <div class="habits-container">
     <div class="habits-list">
-      <div v-if="habits.length === 0" class="empty-state">
+      <div v-if="dailyHabits.length === 0" class="empty-state">
         <p>No habits yet. Add one to get started!</p>
       </div>
-      <div v-for="habit in habits" :key="habit.id" class="habit-item">
+      <div v-for="habit in dailyHabits" :key="habit.id" class="habit-item">
         <input
           type="checkbox"
           :checked="habit.completed"

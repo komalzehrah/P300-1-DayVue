@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import { SunIcon, BellIcon, CogIcon } from '@heroicons/vue/24/outline'
+import { SunIcon, CogIcon } from '@heroicons/vue/24/outline'
 
 const emit = defineEmits<{
   'toggle-settings': []
-  'toggle-notifications': []
 }>()
 
 defineProps<{
-  notificationsOpen: boolean
   settingsOpen: boolean
 }>()
 </script>
@@ -22,14 +20,6 @@ defineProps<{
     </div>
 
     <div class="toolbar-right">
-      <button
-        class="icon-btn notifications-btn"
-        @click="$emit('toggle-notifications')"
-        :class="{ active: notificationsOpen }"
-        aria-label="Notifications"
-      >
-        <BellIcon />
-      </button>
       <button
         class="icon-btn settings-btn"
         @click="$emit('toggle-settings')"
@@ -63,13 +53,19 @@ defineProps<{
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  line-height: 1;
   cursor: pointer;
 }
 
 .sun-icon {
+  display: block;
   width: 24px;
   height: 24px;
+  color: var(--accent-color);
+}
 
+body.light-mode .sun-icon {
+  color: #ff8c69;
 }
 
 .icon-btn:hover {
@@ -91,15 +87,20 @@ defineProps<{
 
 .toolbar-right {
   display: flex;
+  align-items: center;
   gap: 0.5rem;
 }
 
 .icon-btn {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
   background: none;
   border: none;
   font-size: 1.2rem;
   cursor: pointer;
-  padding: 0.5rem;
+  padding: 0;
   transition: transform 0.2s ease, color 0.2s ease;
   border-radius: 6px;
   color: var(--accent-color);
@@ -111,6 +112,12 @@ defineProps<{
   color: var(--accent-hover);
 }
 
+.icon-btn.settings-btn,
+.icon-btn.settings-btn.active,
+.icon-btn.settings-btn:hover {
+  color: var(--text-primary);
+}
+
 .cta-container {
   padding: 0.5rem 1rem;
   background: var(--bg-secondary);
@@ -120,7 +127,7 @@ defineProps<{
 .add-btn {
   width: 100%;
   padding: 0.75rem;
-  background: var(--accent-color);
+  background: var(--accent-surface);
   color: #000;
   border: none;
   border-radius: 20px;
@@ -132,7 +139,7 @@ defineProps<{
 }
 
 .add-btn:hover {
-  background: var(--accent-hover);
+  background: var(--accent-surface-hover);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(255, 193, 7, 0.2);
 }
