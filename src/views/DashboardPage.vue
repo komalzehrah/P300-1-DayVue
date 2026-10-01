@@ -477,12 +477,6 @@ const scheduleChartOptions = computed<ChartOptions<'bar'>>(() => ({
 
 <template>
   <div class="dashboard-page">
-    <header class="dashboard-heading">
-      <div>
-        <h1>Recap</h1>
-      </div>
-    </header>
-
     <section class="summary-grid" :aria-label="`Summary for ${dateRangeLabel}`">
       <article class="summary-item">
         <span class="summary-label">Calendar commitments</span>
@@ -598,34 +592,10 @@ const scheduleChartOptions = computed<ChartOptions<'bar'>>(() => ({
   color: var(--text-primary);
 }
 
-.dashboard-heading,
 .summary-grid,
 .dashboard-grid {
   width: min(100%, 1280px);
   margin-inline: auto;
-}
-
-.dashboard-heading {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
-}
-
-.dashboard-heading h1 {
-  margin: 0;
-  font-family: var(--font-body);
-  font-size: calc(1.65rem + 2pt);
-  font-weight: 400;
-}
-
-.date-range {
-  padding-bottom: 0.2rem;
-  color: var(--text-secondary);
-  font-family: var(--font-ui);
-  font-size: calc(0.8rem + 2pt);
-  white-space: nowrap;
 }
 
 .summary-grid {

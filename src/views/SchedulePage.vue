@@ -557,7 +557,8 @@ const deleteItem = (itemId: string) => {
 .schedule-container {
   padding: 1rem;
   overflow-y: auto;
-  height: calc(100vh - 180px);
+  height: 100%;
+  min-height: 0;
   background: var(--bg-primary);
 }
 

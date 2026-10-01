@@ -243,11 +243,10 @@ const isSelected = (date: Date | null) => {
   position: absolute;
   top: calc(100% + 0.5rem);
   right: auto;
-  left: 50%;
+  left: 0;
   z-index: 1;
   width: min(320px, calc(100vw - 2rem));
   padding: 1.5rem;
-  transform: translateX(-50%);
   border: 1px solid var(--border-color);
   border-radius: 12px;
   background: var(--bg-secondary);

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { ArrowRightIcon, CalendarDaysIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
+import { ArrowRightIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps<{
   startDate: string
@@ -181,7 +181,6 @@ const applyRange = () => {
           :aria-expanded="showPicker"
           @click="openPicker"
         >
-          <CalendarDaysIcon class="range-calendar-icon" />
           <span>{{ rangeLabel }}</span>
           <ChevronDownIcon class="range-chevron-icon" />
         </button>
@@ -283,13 +282,13 @@ const applyRange = () => {
   z-index: 100;
   flex: 0 0 auto;
   padding: 1rem;
-  background: var(--bg-primary);
+  background: var(--bg-secondary);
 }
 
 .date-display {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .range-anchor {
@@ -318,12 +317,6 @@ const applyRange = () => {
   background: var(--bg-secondary);
 }
 
-.range-calendar-icon {
-  width: 18px;
-  height: 18px;
-  color: var(--accent-color);
-}
-
 .range-chevron-icon {
   width: 16px;
   height: 16px;
@@ -340,14 +333,13 @@ const applyRange = () => {
 .range-popover {
   position: absolute;
   top: calc(100% + 0.5rem);
-  left: 50%;
+  left: 0;
   z-index: 1;
   display: grid;
   grid-template-columns: 150px minmax(0, 1fr);
   width: min(860px, calc(100vw - 2rem));
   max-height: min(90dvh, 760px);
   overflow: auto;
-  transform: translateX(-50%);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   background: var(--bg-secondary);
