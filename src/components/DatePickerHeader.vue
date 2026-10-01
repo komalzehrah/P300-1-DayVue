@@ -1,80 +1,93 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
+import { computed, ref } from "vue";
+import {
+  ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+} from "@heroicons/vue/24/outline";
 
 const props = defineProps<{
-  modelValue: string
-  showScheduleView?: boolean
-  scheduleView?: 'daily' | 'weekly' | 'monthly'
-}>()
+  modelValue: string;
+  showScheduleView?: boolean;
+  scheduleView?: "daily" | "weekly" | "monthly";
+}>();
 
 const emit = defineEmits<{
-  'update:modelValue': [value: string]
-  'update:scheduleView': [value: 'daily' | 'weekly' | 'monthly']
-}>()
+  "update:modelValue": [value: string];
+  "update:scheduleView": [value: "daily" | "weekly" | "monthly"];
+}>();
 
-const showDatePicker = ref(false)
+const showDatePicker = ref(false);
 const parseDate = (value: string) => {
-  const [year = 1970, month = 1, day = 1] = value.split('-').map(Number)
-  return new Date(year, month - 1, day)
-}
+  const [year = 1970, month = 1, day = 1] = value.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
 
 const formatDate = (date: Date) =>
-  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
-const pickerDate = ref(parseDate(props.modelValue))
+const pickerDate = ref(parseDate(props.modelValue));
 
 const currentDateDisplay = computed(() => {
-  const date = parseDate(props.modelValue)
+  const date = parseDate(props.modelValue);
   return {
-    dayName: date.toLocaleDateString('en-US', { weekday: 'short' }),
-    month: date.toLocaleDateString('en-US', { month: 'short' }),
+    dayName: date.toLocaleDateString("en-US", { weekday: "short" }),
+    month: date.toLocaleDateString("en-US", { month: "short" }),
     day: date.getDate(),
-    year: date.getFullYear()
-  }
-})
+    year: date.getFullYear(),
+  };
+});
 
 const pickerMonthYear = computed(() =>
-  pickerDate.value.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-)
+  pickerDate.value.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  }),
+);
 
 const calendarDays = computed(() => {
-  const year = pickerDate.value.getFullYear()
-  const month = pickerDate.value.getMonth()
-  const firstDay = new Date(year, month, 1)
-  const daysInMonth = new Date(year, month + 1, 0).getDate()
-  const days: Array<Date | null> = Array(firstDay.getDay()).fill(null)
+  const year = pickerDate.value.getFullYear();
+  const month = pickerDate.value.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const days: Array<Date | null> = Array(firstDay.getDay()).fill(null);
 
   for (let day = 1; day <= daysInMonth; day++) {
-    days.push(new Date(year, month, day))
+    days.push(new Date(year, month, day));
   }
 
-  return days
-})
+  return days;
+});
 
 const openDatePicker = () => {
-  pickerDate.value = parseDate(props.modelValue)
-  showDatePicker.value = true
-}
+  pickerDate.value = parseDate(props.modelValue);
+  showDatePicker.value = true;
+};
 
 const previousMonth = () => {
-  pickerDate.value = new Date(pickerDate.value.getFullYear(), pickerDate.value.getMonth() - 1)
-}
+  pickerDate.value = new Date(
+    pickerDate.value.getFullYear(),
+    pickerDate.value.getMonth() - 1,
+  );
+};
 
 const nextMonth = () => {
-  pickerDate.value = new Date(pickerDate.value.getFullYear(), pickerDate.value.getMonth() + 1)
-}
+  pickerDate.value = new Date(
+    pickerDate.value.getFullYear(),
+    pickerDate.value.getMonth() + 1,
+  );
+};
 
 const selectDate = (date: Date) => {
-  emit('update:modelValue', formatDate(date))
-  showDatePicker.value = false
-}
+  emit("update:modelValue", formatDate(date));
+  showDatePicker.value = false;
+};
 
-const selectToday = () => selectDate(new Date())
+const selectToday = () => selectDate(new Date());
 
 const isSelected = (date: Date | null) => {
-  return date ? formatDate(date) === props.modelValue : false
-}
+  return date ? formatDate(date) === props.modelValue : false;
+};
 </script>
 
 <template>
@@ -82,44 +95,61 @@ const isSelected = (date: Date | null) => {
     <div class="date-group">
       <span class="date-text">
         {{ currentDateDisplay.dayName }},
-        <span class="date-highlight">{{ currentDateDisplay.month }} {{ currentDateDisplay.day }},</span>
+        <span class="date-highlight"
+          >{{ currentDateDisplay.month }} {{ currentDateDisplay.day }},</span
+        >
         {{ currentDateDisplay.year }}
       </span>
       <div class="date-picker-anchor">
-        <button class="date-picker-btn" @click="openDatePicker" aria-label="Open date picker" title="Open date picker">
+        <button
+          class="date-picker-btn"
+          @click="openDatePicker"
+          aria-label="Open date picker"
+          title="Open date picker"
+        >
           <ChevronDownIcon />
         </button>
         <div v-if="showDatePicker" class="date-picker-modal">
-        <div class="date-picker-header">
-          <button class="nav-btn" @click="previousMonth" aria-label="Previous month">
-            <ChevronLeftIcon />
-          </button>
-          <h2 class="month-year">{{ pickerMonthYear }}</h2>
-          <button class="nav-btn" @click="nextMonth" aria-label="Next month">
-            <ChevronRightIcon />
-          </button>
-        </div>
-
-        <div class="calendar-grid">
-          <div v-for="day in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" :key="day" class="weekday-header">
-            {{ day }}
+          <div class="date-picker-header">
+            <button
+              class="nav-btn"
+              @click="previousMonth"
+              aria-label="Previous month"
+            >
+              <ChevronLeftIcon />
+            </button>
+            <h2 class="month-year">{{ pickerMonthYear }}</h2>
+            <button class="nav-btn" @click="nextMonth" aria-label="Next month">
+              <ChevronRightIcon />
+            </button>
           </div>
-          <button
-            v-for="(day, index) in calendarDays"
-            :key="index"
-            class="calendar-day"
-            :class="{ empty: !day, selected: day && isSelected(day) }"
-            :disabled="!day"
-            @click="day && selectDate(day)"
-          >
-            {{ day?.getDate() ?? '' }}
-          </button>
-        </div>
 
-        <div class="date-picker-footer">
-          <button class="today-btn" @click="selectToday">Today</button>
-          <button class="cancel-btn" @click="showDatePicker = false">Cancel</button>
-        </div>
+          <div class="calendar-grid">
+            <div
+              v-for="day in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']"
+              :key="day"
+              class="weekday-header"
+            >
+              {{ day }}
+            </div>
+            <button
+              v-for="(day, index) in calendarDays"
+              :key="index"
+              class="calendar-day"
+              :class="{ empty: !day, selected: day && isSelected(day) }"
+              :disabled="!day"
+              @click="day && selectDate(day)"
+            >
+              {{ day?.getDate() ?? "" }}
+            </button>
+          </div>
+
+          <div class="date-picker-footer">
+            <button class="today-btn" @click="selectToday">Today</button>
+            <button class="cancel-btn" @click="showDatePicker = false">
+              Cancel
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -127,7 +157,11 @@ const isSelected = (date: Date | null) => {
     <slot name="header-trailing" />
   </header>
 
-  <div v-if="showDatePicker" class="date-picker-backdrop" @click="showDatePicker = false" />
+  <div
+    v-if="showDatePicker"
+    class="date-picker-backdrop"
+    @click="showDatePicker = false"
+  />
 </template>
 
 <style scoped>
@@ -175,7 +209,9 @@ const isSelected = (date: Date | null) => {
   background: transparent;
   color: var(--accent-color);
   cursor: pointer;
-  transition: color 0.2s ease, transform 0.2s ease;
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
   flex-shrink: 0;
 }
 

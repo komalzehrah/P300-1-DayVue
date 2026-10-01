@@ -1,106 +1,120 @@
 <script setup lang="ts">
-import { computed, reactive, ref, provide } from 'vue'
-import { useRouter } from 'vue-router'
-import { PlusIcon } from '@heroicons/vue/24/outline'
-import DatePickerHeader from '../components/DatePickerHeader.vue'
-import DashboardDateRangePicker from '../components/DashboardDateRangePicker.vue'
-import Toolbar from '../components/Toolbar.vue'
-import TabNavigation from '../components/TabNavigation.vue'
-import SettingsDrawer from '../components/SettingsDrawer.vue'
-import AddItemModal from '../components/AddItemModal.vue'
-import { sampleHabits, sampleScheduleItems, sampleTasks, type DatedHabit, type DatedScheduleItem, type DatedTask } from '../data/fakeEntries'
+import { computed, reactive, ref, provide } from "vue";
+import { useRouter } from "vue-router";
+import { PlusIcon } from "@heroicons/vue/24/outline";
+import DatePickerHeader from "../components/DatePickerHeader.vue";
+import DashboardDateRangePicker from "../components/DashboardDateRangePicker.vue";
+import Toolbar from "../components/Toolbar.vue";
+import TabNavigation from "../components/TabNavigation.vue";
+import SettingsDrawer from "../components/SettingsDrawer.vue";
+import AddItemModal from "../components/AddItemModal.vue";
+import {
+  sampleHabits,
+  sampleScheduleItems,
+  sampleTasks,
+  type DatedHabit,
+  type DatedScheduleItem,
+  type DatedTask,
+} from "../data/fakeEntries";
 
-const router = useRouter()
-type NavigationPage = 'Schedule' | 'Tasks' | 'Habits' | 'Recap'
-type ScheduleView = 'daily' | 'weekly' | 'monthly'
+const router = useRouter();
+type NavigationPage = "Schedule" | "Tasks" | "Habits" | "Recap";
+type ScheduleView = "daily" | "weekly" | "monthly";
 
 const scheduleViews: Array<{ id: ScheduleView; label: string }> = [
-  { id: 'daily', label: 'Daily' },
-  { id: 'weekly', label: 'Weekly' },
-  { id: 'monthly', label: 'Monthly' }
-]
+  { id: "daily", label: "Daily" },
+  { id: "weekly", label: "Weekly" },
+  { id: "monthly", label: "Monthly" },
+];
 
-const showSettingsDrawer = ref(false)
-const showAddModal = ref(false)
+const showSettingsDrawer = ref(false);
+const showAddModal = ref(false);
 const selectedTab = computed<NavigationPage>(() => {
-  const routeName = router.currentRoute.value.name
-  return routeName === 'Schedule' || routeName === 'Tasks' || routeName === 'Habits' ? routeName : 'Recap'
-})
-const today = new Date()
+  const routeName = router.currentRoute.value.name;
+  return routeName === "Schedule" ||
+    routeName === "Tasks" ||
+    routeName === "Habits"
+    ? routeName
+    : "Recap";
+});
+const today = new Date();
 const selectedDate = ref(
-  `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-)
-const taskSortBy = ref<'priority' | 'progress'>('priority')
-const scheduleView = ref<ScheduleView>('daily')
-const dashboardDateRange = reactive({ startDate: '2026-03-01', endDate: '2026-07-31' })
-const scheduleItems = ref<DatedScheduleItem[]>([...sampleScheduleItems])
-const tasks = ref<DatedTask[]>([...sampleTasks])
-const habits = ref<DatedHabit[]>([...sampleHabits])
+  `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`,
+);
+const taskSortBy = ref<"priority" | "progress">("priority");
+const scheduleView = ref<ScheduleView>("daily");
+const dashboardDateRange = reactive({
+  startDate: "2026-03-01",
+  endDate: "2026-07-31",
+});
+const scheduleItems = ref<DatedScheduleItem[]>([...sampleScheduleItems]);
+const tasks = ref<DatedTask[]>([...sampleTasks]);
+const habits = ref<DatedHabit[]>([...sampleHabits]);
 
-provide('scheduleItems', scheduleItems)
-provide('selectedDate', selectedDate)
-provide('scheduleView', scheduleView)
-provide('taskSortBy', taskSortBy)
-provide('dashboardDateRange', dashboardDateRange)
-provide('tasks', tasks)
-provide('habits', habits)
+provide("scheduleItems", scheduleItems);
+provide("selectedDate", selectedDate);
+provide("scheduleView", scheduleView);
+provide("taskSortBy", taskSortBy);
+provide("dashboardDateRange", dashboardDateRange);
+provide("tasks", tasks);
+provide("habits", habits);
 
 const toggleSettings = () => {
-  showSettingsDrawer.value = !showSettingsDrawer.value
-}
+  showSettingsDrawer.value = !showSettingsDrawer.value;
+};
 
 const toggleAddModal = () => {
-  showAddModal.value = !showAddModal.value
-}
+  showAddModal.value = !showAddModal.value;
+};
 
 const selectTab = (tab: NavigationPage) => {
   const paths: Record<NavigationPage, string> = {
-    Recap: '/',
-    Schedule: '/schedule',
-    Tasks: '/tasks',
-    Habits: '/habits'
-  }
-  router.push(paths[tab])
-}
+    Recap: "/",
+    Schedule: "/schedule",
+    Tasks: "/tasks",
+    Habits: "/habits",
+  };
+  router.push(paths[tab]);
+};
 
 const handleAddItem = (item: any) => {
-  if (selectedTab.value === 'Tasks') {
+  if (selectedTab.value === "Tasks") {
     tasks.value.push({
       id: item.id,
       title: item.title,
-      priority: item.priority ?? 'medium',
-      progress: item.progress ?? 'not-started',
+      priority: item.priority ?? "medium",
+      progress: item.progress ?? "not-started",
       repeat: item.repeat ?? false,
       repeatFrequency: item.repeatFrequency,
       repeatInterval: item.repeatInterval,
       repeatUnit: item.repeatUnit,
-      date: selectedDate.value
-    })
-    return
+      date: selectedDate.value,
+    });
+    return;
   }
 
-  if (selectedTab.value === 'Habits') {
+  if (selectedTab.value === "Habits") {
     habits.value.push({
       id: item.id,
       title: item.title,
       startDate: item.startDate ?? selectedDate.value,
       endDate: item.endDate,
-      frequency: item.frequency ?? 'Daily',
+      frequency: item.frequency ?? "Daily",
       frequencyCount: item.frequencyCount ?? 1,
-      frequencyUnit: item.frequencyUnit ?? 'day',
-      loggedDates: item.loggedDates ?? []
-    })
-    return
+      frequencyUnit: item.frequencyUnit ?? "day",
+      loggedDates: item.loggedDates ?? [],
+    });
+    return;
   }
 
-  if (selectedTab.value === 'Schedule' || selectedTab.value === 'Recap') {
-    scheduleItems.value.push({ ...item, date: selectedDate.value })
+  if (selectedTab.value === "Schedule" || selectedTab.value === "Recap") {
+    scheduleItems.value.push({ ...item, date: selectedDate.value });
   }
-}
+};
 
 const closeSettings = () => {
-  showSettingsDrawer.value = false
-}
+  showSettingsDrawer.value = false;
+};
 </script>
 
 <template>
@@ -132,7 +146,11 @@ const closeSettings = () => {
         :show-schedule-view="selectedTab === 'Schedule'"
       >
         <template v-if="selectedTab === 'Schedule'" #header-trailing>
-          <div class="schedule-view-switch" role="group" aria-label="Calendar view">
+          <div
+            class="schedule-view-switch"
+            role="group"
+            aria-label="Calendar view"
+          >
             <button
               v-for="view in scheduleViews"
               :key="view.id"
@@ -183,17 +201,10 @@ const closeSettings = () => {
     </button>
 
     <!-- Drawers -->
-    <SettingsDrawer
-      v-if="showSettingsDrawer"
-      @close="closeSettings"
-    />
+    <SettingsDrawer v-if="showSettingsDrawer" @close="closeSettings" />
 
     <!-- Modal Backdrop -->
-    <div
-      v-if="showAddModal"
-      class="modal-backdrop"
-      @click="toggleAddModal"
-    />
+    <div v-if="showAddModal" class="modal-backdrop" @click="toggleAddModal" />
 
     <!-- Add Item Modal -->
     <AddItemModal
