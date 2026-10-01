@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, provide } from 'vue'
 import { useRouter } from 'vue-router'
+import { PlusIcon } from '@heroicons/vue/24/outline'
 import DatePickerHeader from '../components/DatePickerHeader.vue'
 import DashboardDateRangePicker from '../components/DashboardDateRangePicker.vue'
 import Toolbar from '../components/Toolbar.vue'
@@ -61,6 +62,7 @@ const handleAddItem = (item: any) => {
       repeat: item.repeat ?? false,
       repeatFrequency: item.repeatFrequency,
       repeatInterval: item.repeatInterval,
+      repeatUnit: item.repeatUnit,
       date: selectedDate.value
     })
     return
@@ -102,7 +104,6 @@ const closeSettings = () => {
         :selected-tab="selectedTab"
         :settings-open="showSettingsDrawer"
         @select-tab="selectTab"
-        @toggle-add="toggleAddModal"
         @toggle-settings="toggleSettings"
       />
     </aside>
@@ -123,6 +124,17 @@ const closeSettings = () => {
         <RouterView />
       </div>
     </main>
+
+    <button
+      v-if="selectedTab !== 'Recap'"
+      class="mobile-add-fab"
+      type="button"
+      aria-label="Add Item"
+      title="Add item"
+      @click="toggleAddModal"
+    >
+      <PlusIcon aria-hidden="true" />
+    </button>
 
     <!-- Drawers -->
     <SettingsDrawer
@@ -186,6 +198,10 @@ const closeSettings = () => {
   z-index: 99;
 }
 
+.mobile-add-fab {
+  display: none;
+}
+
 @media (max-width: 767px) {
   .sidebar :deep(.tab-navigation) {
     position: fixed;
@@ -195,12 +211,58 @@ const closeSettings = () => {
     z-index: 80;
     border-top: 1px solid var(--border-color);
     border-bottom: 0;
-    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
     box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.18);
   }
 
   .main-content {
-    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+    padding-bottom: calc(108px + env(safe-area-inset-bottom));
+  }
+
+  .mobile-add-fab {
+    position: fixed;
+    right: calc(1rem + 4px);
+    bottom: calc(108px + env(safe-area-inset-bottom));
+    z-index: 90;
+    display: grid;
+    width: 52px;
+    height: 52px;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: #ff8c69;
+    color: #051515;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(5, 21, 21, 0.22);
+    transition:
+      transform 0.15s cubic-bezier(0.16, 1, 0.3, 1),
+      background-color 0.15s ease;
+  }
+
+  .mobile-add-fab:hover {
+    transform: translateY(-2px);
+    background: #ff7a52;
+  }
+
+  .mobile-add-fab:active {
+    transform: scale(0.96);
+  }
+
+  .mobile-add-fab :deep(svg) {
+    width: 24px;
+    height: 24px;
+    stroke-width: 2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-add-fab {
+    transition: none;
+  }
+
+  .mobile-add-fab:hover,
+  .mobile-add-fab:active {
+    transform: none;
   }
 }
 

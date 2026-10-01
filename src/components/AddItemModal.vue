@@ -12,7 +12,8 @@ import {
   SparklesIcon,
   StarIcon,
   TrophyIcon,
-  UserGroupIcon
+  UserGroupIcon,
+  XMarkIcon
 } from '@heroicons/vue/24/outline'
 
 type ItemKind = 'Schedule' | 'Tasks' | 'Habits'
@@ -20,6 +21,7 @@ type EventCategory = 'work' | 'social' | 'personal' | 'other'
 type TaskPriority = 'low' | 'medium' | 'high'
 type TaskProgress = 'not-started' | 'in-progress' | 'done'
 type RepeatFrequency = 'daily' | 'weekly' | 'custom'
+type RepeatUnit = 'days' | 'weeks'
 type HabitFrequencyUnit = 'day' | 'week' | 'month'
 
 interface AddItemData {
@@ -36,6 +38,7 @@ interface AddItemData {
   repeat?: boolean
   repeatFrequency?: RepeatFrequency
   repeatInterval?: number
+  repeatUnit?: RepeatUnit
   startDate?: string
   endDate?: string
   frequencyCount?: number
@@ -81,7 +84,7 @@ const initialDuration = props.item?.duration ?? 30
 const itemTitle = ref(props.item?.title ?? '')
 const itemTime = ref(props.item?.time ?? '09:00')
 const timeMinutes = Number(itemTime.value.split(':')[1]) || 0
-const customTime = ref(timeMinutes % 30 !== 0)
+const customTime = ref(timeMinutes !== 0)
 const itemDuration = ref(String(initialDuration))
 const durationMode = ref<'preset' | 'custom'>(
   durationPresets.some(preset => preset.value === initialDuration) ? 'preset' : 'custom'
@@ -100,6 +103,7 @@ const itemProgress = ref<TaskProgress>(props.item?.progress ?? 'not-started')
 const repeatTask = ref(props.item?.repeat ?? false)
 const repeatFrequency = ref<RepeatFrequency>(props.item?.repeatFrequency ?? 'daily')
 const repeatInterval = ref(String(props.item?.repeatInterval ?? 2))
+const repeatUnit = ref<RepeatUnit>(props.item?.repeatUnit ?? 'days')
 const selectedIcon = ref(props.item?.icon ?? 'ClockIcon')
 const selectedColor = ref(props.item?.color ?? '#FF8C69')
 const eventCategory = ref(props.item?.category ?? 'personal')
@@ -107,12 +111,9 @@ const legacyEventCategory = props.item?.category && !eventCategories.some(catego
   ? props.item.category
   : undefined
 
-const timeOptions = Array.from({ length: 48 }, (_, index) => {
-  const totalMinutes = index * 30
-  const hours = Math.floor(totalMinutes / 60)
-  const minutes = totalMinutes % 60
-  const value = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
-  const label = `${hours % 12 || 12}:${String(minutes).padStart(2, '0')} ${hours < 12 ? 'AM' : 'PM'}`
+const timeOptions = Array.from({ length: 24 }, (_, hours) => {
+  const value = `${String(hours).padStart(2, '0')}:00`
+  const label = `${hours % 12 || 12}:00 ${hours < 12 ? 'AM' : 'PM'}`
   return { value, label }
 })
 
@@ -206,7 +207,10 @@ const handleSubmit = () => {
       repeat: repeatTask.value,
       ...(repeatTask.value && {
         repeatFrequency: repeatFrequency.value,
-        ...(repeatFrequency.value === 'custom' && { repeatInterval: Number(repeatInterval.value) || 1 })
+        ...(repeatFrequency.value === 'custom' && {
+          repeatInterval: Number(repeatInterval.value) || 1,
+          repeatUnit: repeatUnit.value
+        })
       })
     }),
     ...(props.activeTab === 'Habits' && {
@@ -240,7 +244,9 @@ const deleteItem = () => {
             ? activeTab === 'Schedule' ? 'Edit Event' : activeTab === 'Tasks' ? 'Edit Task' : 'Edit Habit'
             : activeTab === 'Schedule' ? 'Add New Event' : activeTab === 'Tasks' ? 'Add New Task' : 'Add New Habit' }}
         </h2>
-        <button class="close-btn" aria-label="Close" @click="closeModal">&times;</button>
+        <button class="close-btn" aria-label="Close" @click="closeModal">
+          <XMarkIcon />
+        </button>
       </header>
 
       <form class="modal-form" @submit.prevent="handleSubmit">
@@ -372,7 +378,10 @@ const deleteItem = () => {
             <label v-if="repeatFrequency === 'custom'" for="repeat-interval">Repeat every</label>
             <div v-if="repeatFrequency === 'custom'" class="repeat-interval-control">
               <input id="repeat-interval" v-model="repeatInterval" type="number" min="1" step="1" />
-              <span>days</span>
+              <select id="repeat-unit" v-model="repeatUnit" aria-label="Repeat interval unit">
+                <option value="days">Days</option>
+                <option value="weeks">Weeks</option>
+              </select>
             </div>
           </template>
         </div>
@@ -402,12 +411,12 @@ const deleteItem = () => {
 
         <footer class="form-actions" :class="{ 'edit-actions': mode === 'edit' }">
           <button v-if="mode === 'edit'" class="delete-btn" type="button" @click="deleteItem">
-            {{ activeTab === 'Schedule' ? 'Delete Event' : activeTab === 'Tasks' ? 'Delete Task' : 'Delete Habit' }}
+            Delete
           </button>
           <button class="cancel-btn" type="button" @click="closeModal">Cancel</button>
           <button class="submit-btn" type="submit">
             {{ mode === 'edit'
-              ? activeTab === 'Schedule' ? 'Save Event' : activeTab === 'Tasks' ? 'Save Changes' : 'Save Habit'
+              ? 'Save'
               : activeTab === 'Schedule' ? 'Add to Schedule' : activeTab === 'Tasks' ? 'Add to List' : 'Add Habit' }}
           </button>
         </footer>
@@ -485,7 +494,13 @@ const deleteItem = () => {
   background: transparent;
   color: var(--text-primary);
   cursor: pointer;
-  font-size: calc(1.3rem + 2pt);
+}
+
+.close-btn :deep(svg) {
+  width: 16px;
+  height: 16px;
+  transform: translateX(4px);
+  stroke-width: 2;
 }
 
 .modal-form {
@@ -604,7 +619,8 @@ const deleteItem = () => {
 }
 
 .repeat-interval-control {
-  display: flex;
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
   align-items: center;
   gap: 0.6rem;
   color: var(--text-secondary);
@@ -613,7 +629,7 @@ const deleteItem = () => {
 }
 
 .repeat-interval-control input {
-  width: 88px;
+  width: 100%;
 }
 
 .habit-frequency-control {

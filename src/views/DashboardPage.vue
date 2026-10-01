@@ -97,12 +97,12 @@ const habitSeries: Array<{ key: HabitKey; label: string }> = [
   { key: 'sketchFor5Minutes', label: 'Sketch' }
 ]
 const chartColors = computed(() => isLightMode.value
-  ? { gym: '#506bff', meditation: '#f17418', bedtimeBefore11pm: '#c6d608', sketchFor5Minutes: '#ad00d9', tasks: '#506bff' }
-  : { gym: '#30b3f4', meditation: '#ff9076', bedtimeBefore11pm: '#d8e910', sketchFor5Minutes: '#cb67de', tasks: '#30b3f4' }
+  ? { gym: '#20a9ae', meditation: '#d14b00', bedtimeBefore11pm: '#64c900', sketchFor5Minutes: '#ba36d2', tasks: '#4c14bc' }
+  : { gym: '#64e2c0', meditation: '#ff8f4b', bedtimeBefore11pm: '#cdff8f', sketchFor5Minutes: '#c866db', tasks: '#3176ee' }
 )
 const categoryColors = computed(() => isLightMode.value
-  ? { work: '#506bff', health: '#f17418', family: '#c6d608', social: '#ad00d9', personal: '#f23daa', home: '#c6d608', other: '#ad00d9' }
-  : { work: '#30b3f4', health: '#ff9076', family: '#d8e910', social: '#cb67de', personal: '#f675c5', home: '#d8e910', other: '#cb67de' }
+  ? { work: '#4c14bc', health: '#64c900', family: '#d14b00', social: '#20a9ae', personal: '#ba36d2', home: '#20a9ae', other: '#4c14bc' }
+  : { work: '#3176ee', health: '#cdff8f', family: '#ff8f4b', social: '#64e2c0', personal: '#c866db', home: '#64e2c0', other: '#3176ee' }
 )
 const chartTextColor = computed(() => isLightMode.value ? '#35413f' : '#9db3b1')
 const chartGridColor = computed(() => isLightMode.value ? 'rgba(38, 83, 76, 0.16)' : 'rgba(157, 179, 177, 0.12)')

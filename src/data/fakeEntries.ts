@@ -23,6 +23,7 @@ export interface DatedTask {
   repeat: boolean
   repeatFrequency?: 'daily' | 'weekly' | 'custom'
   repeatInterval?: number
+  repeatUnit?: 'days' | 'weeks'
 }
 
 export interface DatedHabit {

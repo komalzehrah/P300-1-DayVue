@@ -36,7 +36,8 @@ button {
   font-size: inherit;
 }
 
-body:not(.light-mode) input[type="date"]::-webkit-calendar-picker-indicator {
+body:not(.light-mode) input[type="date"]::-webkit-calendar-picker-indicator,
+body:not(.light-mode) input[type="time"]::-webkit-calendar-picker-indicator {
   filter: invert(87%) sepia(28%) saturate(589%) hue-rotate(9deg) brightness(99%)
     contrast(91%);
 }

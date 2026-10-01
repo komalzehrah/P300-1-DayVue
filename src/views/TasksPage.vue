@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, inject, ref, type Ref } from 'vue'
-import { CheckIcon, PencilSquareIcon } from '@heroicons/vue/24/outline'
+import { CheckIcon } from '@heroicons/vue/24/outline'
+import { PhPencilSimple } from '@phosphor-icons/vue'
 import AddItemModal from '../components/AddItemModal.vue'
 
 type TaskPriority = 'low' | 'medium' | 'high'
@@ -15,6 +16,7 @@ interface Task {
   repeat: boolean
   repeatFrequency?: 'daily' | 'weekly' | 'custom'
   repeatInterval?: number
+  repeatUnit?: 'days' | 'weeks'
 }
 
 interface TaskEditPayload {
@@ -25,6 +27,7 @@ interface TaskEditPayload {
   repeat?: boolean
   repeatFrequency?: 'daily' | 'weekly' | 'custom'
   repeatInterval?: number
+  repeatUnit?: 'days' | 'weeks'
 }
 
 const tasks = inject<Ref<Task[]>>('tasks', ref<Task[]>([]))
@@ -72,6 +75,9 @@ const saveTask = (updatedTask: TaskEditPayload) => {
       repeatFrequency: updatedTask.repeat ? updatedTask.repeatFrequency : undefined,
       repeatInterval: updatedTask.repeat && updatedTask.repeatFrequency === 'custom'
         ? updatedTask.repeatInterval
+        : undefined,
+      repeatUnit: updatedTask.repeat && updatedTask.repeatFrequency === 'custom'
+        ? updatedTask.repeatUnit ?? 'days'
         : undefined
     }
   }
@@ -114,7 +120,11 @@ const deleteTask = (taskId: string) => {
           :aria-label="task.progress === 'done' ? `Mark ${task.title} not done` : `Mark ${task.title} done`"
           @click="toggleTask(task.id)"
         >
-          <CheckIcon v-if="task.progress === 'done'" />
+          <Transition name="task-check">
+            <span v-if="task.progress === 'done'" class="task-check-mark" aria-hidden="true">
+              <CheckIcon />
+            </span>
+          </Transition>
         </button>
         <div class="task-copy">
           <span class="task-title">{{ task.title }}</span>
@@ -128,7 +138,7 @@ const deleteTask = (taskId: string) => {
           </div>
         </div>
         <button class="edit-task" :aria-label="`Edit ${task.title}`" title="Edit task" @click="editTask(task)">
-          <PencilSquareIcon />
+          <PhPencilSimple />
         </button>
       </article>
     </div>
@@ -219,7 +229,7 @@ const deleteTask = (taskId: string) => {
   padding: 0.6rem 0.9rem;
   border: 1px solid var(--border-color);
   background: var(--bg-secondary);
-  border-radius: 999px;
+  border-radius: 8px;
   transition:
     background 0.2s ease,
     border-color 0.2s ease;
@@ -247,7 +257,17 @@ const deleteTask = (taskId: string) => {
   cursor: pointer;
   transition:
     background 0.2s ease,
-    border-color 0.2s ease;
+    border-color 0.2s ease,
+    transform 120ms cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.task-toggle:active {
+  transform: scale(0.92);
+}
+
+.task-toggle:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 3px;
 }
 
 .task-toggle.checked {
@@ -259,6 +279,29 @@ const deleteTask = (taskId: string) => {
   width: 16px;
   height: 16px;
   stroke-width: 2.5;
+}
+
+.task-check-mark {
+  display: grid;
+  width: 16px;
+  height: 16px;
+  place-items: center;
+}
+
+.task-check-enter-active {
+  transition:
+    opacity 0.18s ease-out,
+    transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.task-check-enter-from {
+  opacity: 0;
+  transform: scale(0.65);
+}
+
+.task-check-enter-to {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .task-copy {
@@ -297,7 +340,7 @@ const deleteTask = (taskId: string) => {
   border-radius: 999px;
   cursor: pointer;
   font-family: var(--font-ui);
-  font-size: calc(0.68rem + 2pt);
+  font-size: 0.68rem;
   font-weight: 500;
   text-transform: capitalize;
 }
@@ -423,6 +466,17 @@ body.light-mode .task-pill.completed {
   background: #e5eeeb;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .task-toggle,
+  .task-check-enter-active {
+    transition: none;
+  }
+
+  .task-toggle:active {
+    transform: none;
+  }
+}
+
 @media (max-width: 420px) {
   .tasks-toolbar {
     align-items: flex-start;
@@ -431,7 +485,7 @@ body.light-mode .task-pill.completed {
 
   .task-pill {
     align-items: flex-start;
-    border-radius: 20px;
+    border-radius: 8px;
   }
 
   .task-copy {

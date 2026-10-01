@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, inject, type Component, type Ref } from 'vue'
+import { ref, computed, inject, nextTick, onBeforeUnmount, onMounted, type Component, type Ref, watch } from 'vue'
 import AddItemModal from '../components/AddItemModal.vue'
 import {
   ClockIcon,
@@ -28,6 +28,23 @@ interface ScheduleItem {
   color?: string
 }
 
+interface EventInterval {
+  item: ScheduleItem
+  startMinute: number
+  intervalStart: number
+  intervalEnd: number
+}
+
+interface PositionedScheduleItem extends ScheduleItem {
+  laneIndex: number
+  laneCount: number
+}
+
+interface DisplayedScheduleItem extends PositionedScheduleItem {
+  displayTop: number
+  displayHeight: number
+}
+
 const scheduleIcons: Record<string, Component> = {
   ClockIcon,
   CalendarIcon,
@@ -46,16 +63,28 @@ const scheduleIcons: Record<string, Component> = {
 const getScheduleIcon = (name?: string) => scheduleIcons[name ?? 'ClockIcon'] ?? ClockIcon
 
 type CalendarView = 'daily' | 'weekly' | 'monthly'
+const pixelsPerHour = 120
+const pixelsPerMinute = pixelsPerHour / 60
+const eventCardMargin = 1
+const hourLineGap = 1
 
 const scheduleItems = inject<Ref<ScheduleItem[]>>('scheduleItems', ref<ScheduleItem[]>([]))
+const scheduleContainer = ref<HTMLElement | null>(null)
+const currentTimeLine = ref<HTMLElement | null>(null)
 const today = new Date()
 const selectedDate = inject<Ref<string>>(
   'selectedDate',
   ref(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`)
 )
 const calendarView = ref<CalendarView>('daily')
+const currentTime = ref(new Date())
+const dragOffsetFromTop = ref(0)
 const showEditModal = ref(false)
 const selectedItem = ref<ScheduleItem | null>(null)
+const gridContainer = ref<HTMLElement | null>(null)
+const draggedItemId = ref('')
+const suppressClickId = ref('')
+let currentTimeTimer: number | undefined
 const calendarViews: Array<{ id: CalendarView; label: string }> = [
   { id: 'daily', label: 'Daily' },
   { id: 'weekly', label: 'Weekly' },
@@ -69,6 +98,40 @@ const parseDate = (value: string) => {
 
 const formatDate = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+
+const isTodaySelected = computed(() => selectedDate.value === formatDate(currentTime.value))
+const currentTimePosition = computed(() => `${(currentTime.value.getHours() * 60 + currentTime.value.getMinutes()) * pixelsPerMinute}px`)
+const currentTimeLabel = computed(() => currentTime.value.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }))
+
+const scrollCurrentTimeIntoView = () => {
+  if (calendarView.value !== 'daily' || !isTodaySelected.value) return
+
+  nextTick(() => {
+    const container = scheduleContainer.value
+    const marker = currentTimeLine.value
+    if (!container || !marker) return
+
+    const containerBounds = container.getBoundingClientRect()
+    const markerOffset = marker.getBoundingClientRect().top - containerBounds.top + container.scrollTop
+    container.scrollTo({
+      top: Math.max(0, markerOffset - container.clientHeight * 0.45),
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+    })
+  })
+}
+
+watch([calendarView, isTodaySelected], scrollCurrentTimeIntoView, { flush: 'post' })
+
+onMounted(() => {
+  currentTimeTimer = window.setInterval(() => {
+    currentTime.value = new Date()
+  }, 60_000)
+  scrollCurrentTimeIntoView()
+})
+
+onBeforeUnmount(() => {
+  if (currentTimeTimer !== undefined) window.clearInterval(currentTimeTimer)
+})
 
 const weekDays = computed(() => {
   const firstDay = parseDate(selectedDate.value)
@@ -125,6 +188,92 @@ const itemsForDate = (date: Date) => scheduleItems.value.filter((item: ScheduleI
 
 const items = computed(() => itemsForDate(parseDate(selectedDate.value)))
 
+const layoutOverlappingEvents = (sourceItems: ScheduleItem[]): DisplayedScheduleItem[] => {
+  const intervals = sourceItems.map(item => {
+    const [hours = 0, minutes = 0] = item.time.split(':').map(Number)
+    const startMinute = hours * 60 + minutes
+    const endMinute = startMinute + item.duration
+
+    return {
+      item,
+      startMinute,
+      intervalStart: startMinute,
+      intervalEnd: endMinute
+    }
+  }).sort((first, second) => first.startMinute - second.startMinute || second.intervalEnd - first.intervalEnd)
+
+  const placed: PositionedScheduleItem[] = []
+  let overlapGroup: EventInterval[] = []
+  let overlapGroupEnd = -1
+
+  const placeOverlapGroup = () => {
+    if (!overlapGroup.length) return
+
+    const laneEnds: number[] = []
+    const laneAssignments = overlapGroup.map(interval => {
+      let laneIndex = laneEnds.findIndex(laneEnd => laneEnd <= interval.intervalStart)
+      if (laneIndex === -1) {
+        laneIndex = laneEnds.length
+        laneEnds.push(interval.intervalEnd)
+      } else {
+        laneEnds[laneIndex] = interval.intervalEnd
+      }
+      return { item: interval.item, laneIndex }
+    })
+
+    for (const assignment of laneAssignments) {
+      placed.push({ ...assignment.item, laneIndex: assignment.laneIndex, laneCount: laneEnds.length })
+    }
+    overlapGroup = []
+    overlapGroupEnd = -1
+  }
+
+  for (const interval of intervals) {
+    if (overlapGroup.length && interval.startMinute >= overlapGroupEnd) placeOverlapGroup()
+    overlapGroup.push(interval)
+    overlapGroupEnd = Math.max(overlapGroupEnd, interval.intervalEnd)
+  }
+  placeOverlapGroup()
+
+  const positioned: DisplayedScheduleItem[] = []
+  const occupiedCards: Array<{
+    item: DisplayedScheduleItem
+    startMinute: number
+    endMinute: number
+    left: number
+    right: number
+  }> = []
+
+  for (const item of placed.sort((first, second) => {
+    const [firstHours = 0, firstMinutes = 0] = first.time.split(':').map(Number)
+    const [secondHours = 0, secondMinutes = 0] = second.time.split(':').map(Number)
+    return firstHours * 60 + firstMinutes - secondHours * 60 - secondMinutes
+  })) {
+    const [hours = 0, minutes = 0] = item.time.split(':').map(Number)
+    const startMinute = hours * 60 + minutes
+    const endMinute = startMinute + item.duration
+    const startInset = startMinute > 0 && startMinute % 60 === 0 ? eventCardMargin + hourLineGap : 0
+    const endInset = endMinute % 60 === 0 ? hourLineGap - eventCardMargin : -eventCardMargin
+    const naturalTop = Math.max(0, startMinute * pixelsPerMinute - startInset)
+    const naturalBottom = Math.min(24 * pixelsPerHour - eventCardMargin, endMinute * pixelsPerMinute + endInset)
+    const displayHeight = Math.max(naturalBottom - naturalTop, 34)
+    const left = item.laneIndex / item.laneCount
+    const right = (item.laneIndex + 1) / item.laneCount
+    const previousVisualBottom = occupiedCards
+      .filter(card => card.endMinute <= startMinute && card.left < right && left < card.right)
+      .reduce((bottom, card) => Math.max(bottom, card.item.displayTop + card.item.displayHeight), -Infinity)
+    const displayTop = Math.max(naturalTop, previousVisualBottom + 1)
+    const positionedItem = { ...item, displayTop, displayHeight }
+
+    positioned.push(positionedItem)
+    occupiedCards.push({ item: positionedItem, startMinute, endMinute, left, right })
+  }
+
+  return positioned
+}
+
+const dailyItems = computed(() => layoutOverlappingEvents(items.value))
+
 const formatTime = (time: string) => {
   const [hours = 0, minutes = 0] = time.split(':').map(Number)
   const period = hours < 12 ? 'AM' : 'PM'
@@ -160,23 +309,89 @@ const timeSlots = computed(() => {
   return slots
 })
 
-const getItemStyle = (item: ScheduleItem) => {
-  const [hours = 0, minutes = 0] = item.time.split(':').map(Number)
-  const topOffset = (hours * 60 + minutes)
-  const height = item.duration
+const getItemStyle = (item: DisplayedScheduleItem) => {
+  const columnWidth = 100 / item.laneCount
+  const leftInset = item.laneIndex === 0 ? '0.5rem' : '0.25rem'
+  const rightInset = item.laneIndex === item.laneCount - 1 ? '0.5rem' : '0.25rem'
   
   return {
-    top: `${topOffset}px`,
-    height: `${height}px`,
-    backgroundColor: item.color || 'var(--accent-surface)',
-    left: '0.5rem',
-    right: '0.5rem'
+    top: `${item.displayTop}px`,
+    height: `${item.displayHeight}px`,
+    margin: `${eventCardMargin}px`,
+    '--event-color': item.color || 'var(--accent-surface)',
+    left: `calc(${columnWidth * item.laneIndex}% + ${leftInset})`,
+    right: `calc(${columnWidth * (item.laneCount - item.laneIndex - 1)}% + ${rightInset})`
   }
+}
+
+const moveItemToMinute = (item: ScheduleItem, minute: number) => {
+  const sourceItem = scheduleItems.value.find(scheduleItem => scheduleItem.id === item.id) ?? item
+  const latestStart = Math.max(0, Math.floor((24 * 60 - item.duration) / 15) * 15)
+  const startMinute = Math.max(0, Math.min(latestStart, Math.round(minute / 15) * 15))
+  const hours = Math.floor(startMinute / 60)
+  const minutes = startMinute % 60
+  sourceItem.time = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+}
+
+const handleScheduleItemKeydown = (event: KeyboardEvent, item: ScheduleItem) => {
+  if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+    event.preventDefault()
+    const [hours = 0, minutes = 0] = item.time.split(':').map(Number)
+    const direction = event.key === 'ArrowUp' ? -15 : 15
+    moveItemToMinute(item, hours * 60 + minutes + direction)
+  } else if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault()
+    handleScheduleItemClick(item)
+  }
+}
+
+const handleScheduleDragStart = (event: DragEvent, item: ScheduleItem) => {
+  draggedItemId.value = item.id
+  const card = event.currentTarget as HTMLElement
+  dragOffsetFromTop.value = event.clientY - card.getBoundingClientRect().top
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', item.id)
+  }
+}
+
+const handleScheduleDragOver = (event: DragEvent) => {
+  if (!draggedItemId.value) return
+  event.preventDefault()
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+}
+
+const handleScheduleDrop = (event: DragEvent) => {
+  event.preventDefault()
+  const itemId = event.dataTransfer?.getData('text/plain') || draggedItemId.value
+  const item = scheduleItems.value.find(scheduleItem => scheduleItem.id === itemId)
+  const grid = gridContainer.value
+  if (!item || !grid) return
+
+  const gridTop = grid.getBoundingClientRect().top
+  moveItemToMinute(item, (event.clientY - gridTop - dragOffsetFromTop.value) / pixelsPerMinute)
+  suppressClickId.value = item.id
+  window.setTimeout(() => {
+    if (suppressClickId.value === item.id) suppressClickId.value = ''
+  }, 0)
+  draggedItemId.value = ''
+}
+
+const handleScheduleDragEnd = () => {
+  draggedItemId.value = ''
 }
 
 const openEditModal = (item: ScheduleItem) => {
   selectedItem.value = JSON.parse(JSON.stringify(item))
   showEditModal.value = true
+}
+
+const handleScheduleItemClick = (item: ScheduleItem) => {
+  if (suppressClickId.value === item.id) {
+    suppressClickId.value = ''
+    return
+  }
+  openEditModal(item)
 }
 
 const closeEditModal = () => {
@@ -201,7 +416,7 @@ const deleteItem = (itemId: string) => {
 </script>
 
 <template>
-  <div class="schedule-container">
+  <div ref="scheduleContainer" class="schedule-container">
     <header class="schedule-heading">
       <h1>Schedule</h1>
       <div class="calendar-view-switch" role="group" aria-label="Calendar view">
@@ -230,7 +445,7 @@ const deleteItem = (itemId: string) => {
         </div>
       </div>
 
-      <div class="grid-container">
+      <div ref="gridContainer" class="grid-container">
         <div class="grid-slots">
           <div
             v-for="(slot, i) in timeSlots"
@@ -240,24 +455,39 @@ const deleteItem = (itemId: string) => {
           />
         </div>
 
-        <div class="items-container">
+        <div
+          class="items-container"
+          :class="{ 'drop-target': Boolean(draggedItemId) }"
+          @dragover="handleScheduleDragOver"
+          @drop="handleScheduleDrop"
+        >
           <div
-            v-for="item in items"
+            v-for="item in dailyItems"
             :key="item.id"
             class="schedule-item"
-            :class="{ 'compact-event': item.duration < 45 }"
+            :class="{ 'compact-event': item.duration < 45, 'is-dragging': draggedItemId === item.id }"
             :style="getItemStyle(item)"
-            @click="openEditModal(item)"
+            draggable="true"
+            aria-keyshortcuts="ArrowUp ArrowDown Enter Space"
+            @click="handleScheduleItemClick(item)"
+            @keydown="handleScheduleItemKeydown($event, item)"
+            @dragstart="handleScheduleDragStart($event, item)"
+            @dragend="handleScheduleDragEnd"
             role="button"
             tabindex="0"
           >
-            <span class="event-icon">
-              <component :is="getScheduleIcon(item.icon)" />
+            <span class="event-color-rail">
+              <span class="event-icon">
+                <component :is="getScheduleIcon(item.icon)" />
+              </span>
             </span>
             <span class="event-copy">
               <strong>{{ item.title }}</strong>
               <small>{{ item.duration }}min</small>
             </span>
+          </div>
+          <div v-if="isTodaySelected" ref="currentTimeLine" class="current-time-line" :style="{ top: currentTimePosition }" aria-hidden="true">
+            <span class="current-time-label">Now {{ currentTimeLabel }}</span>
           </div>
         </div>
       </div>
@@ -858,7 +1088,7 @@ const deleteItem = (itemId: string) => {
 }
 
 .hour-label {
-  height: 60px;
+  height: 120px;
   display: flex;
   align-items: flex-start;
   justify-content: flex-end;
@@ -881,13 +1111,17 @@ const deleteItem = (itemId: string) => {
 }
 
 .time-slot {
-  height: 60px;
+  height: 120px;
   border-bottom: 1px solid var(--border-color);
   position: relative;
 }
 
 .time-slot.hour-start {
   border-bottom: 1px solid var(--border-color);
+}
+
+.time-slot:last-child {
+  border-bottom: 0;
 }
 
 .items-container {
@@ -898,35 +1132,62 @@ const deleteItem = (itemId: string) => {
   bottom: 0;
 }
 
-.schedule-item {
+.current-time-line {
   position: absolute;
-  color: #000;
-  padding: 0.5rem;
-  border-radius: 6px;
-  font-size: calc(0.8rem + 2pt);
-  overflow: hidden;
-  word-break: break-word;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  min-height: 2rem;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  justify-content: flex-start;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  user-select: none;
+  right: 0;
+  left: 0;
+  z-index: 6;
+  border-top: 1px dashed var(--accent-color);
+  pointer-events: none;
 }
 
-.schedule-item.compact-event {
-  align-items: center;
-  padding-top: 0.125rem;
-  padding-bottom: 0.125rem;
+.current-time-label {
+  position: absolute;
+  top: 0;
+  left: 0.35rem;
+  padding: 0.15rem 0.35rem;
+  transform: translateY(-50%);
+  border-radius: 4px;
+  background: var(--bg-primary);
+  color: var(--accent-color);
+  font-family: var(--font-ui);
+  font-size: calc(0.62rem + 2pt);
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.items-container.drop-target {
+  background: color-mix(in srgb, var(--accent-color) 3%, transparent);
+}
+
+.schedule-item {
+  position: absolute;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  overflow: hidden;
+  padding: 0;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--event-color) 22%, var(--bg-secondary));
+  color: var(--text-primary);
+  font-size: calc(0.8rem + 2pt);
+  min-height: 34px;
+  transition: filter 0.12s ease;
+  cursor: pointer;
+  user-select: none;
+  cursor: grab;
 }
 
 .schedule-item:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  transform: translateY(-2px) scale(1.02);
-  filter: brightness(1.1);
+  filter: brightness(1.06);
+}
+
+.schedule-item.is-dragging {
+  z-index: 5;
+  opacity: 0.72;
+  cursor: grabbing;
+  transition: none;
 }
 
 .schedule-item:focus {
@@ -940,31 +1201,35 @@ const deleteItem = (itemId: string) => {
   flex: 1 1 auto;
   font-family: var(--font-body);
   font-weight: 600;
+  overflow-wrap: anywhere;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.event-color-rail {
+  display: flex;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 34px;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 0.25rem 0;
+  border-radius: 18px;
+  background: var(--event-color);
+}
+
 .event-icon {
   display: grid;
-  flex: 0 0 24px;
-  width: 24px;
-  height: 24px;
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
   place-items: center;
   border-radius: 50%;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.78);
   color: #051515;
-}
-
-.compact-event .event-icon {
-  flex-basis: 20px;
-  width: 20px;
-  height: 20px;
-}
-
-.compact-event .event-icon :deep(svg) {
-  width: 14px;
-  height: 14px;
 }
 
 .event-icon :deep(svg) {
@@ -974,20 +1239,29 @@ const deleteItem = (itemId: string) => {
 }
 
 .event-copy {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.75rem;
+  left: 34px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   min-width: 0;
-  flex: 1;
-  flex-direction: row;
-  gap: 0.35rem;
+  height: 26px;
+  gap: 0.5rem;
+  padding-left: 0.65rem;
   overflow: hidden;
+}
+
+.schedule-item.compact-event .event-copy {
+  top: 0.25rem;
 }
 
 .schedule-item small {
   display: block;
   flex: 0 0 auto;
   white-space: nowrap;
-  opacity: 0.8;
+  opacity: 0.85;
   font-size: calc(0.7rem + 2pt);
 }
 

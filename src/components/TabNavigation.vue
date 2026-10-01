@@ -1,38 +1,73 @@
 <script setup lang="ts">
 import {
-  Squares2X2Icon,
   CalendarDaysIcon,
-  ClipboardDocumentCheckIcon,
   ArrowPathIcon,
-  ClockIcon,
   Cog6ToothIcon,
-  PlusIcon
 } from '@heroicons/vue/24/outline'
+import { PhClockCounterClockwise, PhListChecks } from '@phosphor-icons/vue'
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
-defineProps<{
+const props = defineProps<{
   selectedTab: 'Schedule' | 'Tasks' | 'Habits' | 'Recap'
   settingsOpen: boolean
 }>()
 
 const emit = defineEmits<{
   'select-tab': [tab: 'Schedule' | 'Tasks' | 'Habits' | 'Recap']
-  'toggle-add': []
   'toggle-settings': []
 }>()
 
 const tabs = [
   { name: 'Schedule', icon: CalendarDaysIcon },
-  { name: 'Tasks', icon: ClipboardDocumentCheckIcon },
+  { name: 'Tasks', icon: PhListChecks },
   { name: 'Habits', icon: ArrowPathIcon },
-  { name: 'Recap', icon: ClockIcon }
+  { name: 'Recap', icon: PhClockCounterClockwise }
 ] as const
 
 type TabName = typeof tabs[number]['name']
+const tabContainer = ref<HTMLElement | null>(null)
+const indicatorStyle = ref<Record<string, string>>({
+  width: '0px',
+  height: '0px',
+  transform: 'translate3d(0, 0, 0)'
+})
+let tabResizeObserver: ResizeObserver | undefined
+
+const updateIndicatorPosition = () => {
+  const container = tabContainer.value
+  const activeTab = container?.querySelector<HTMLElement>('.tab.active')
+  if (!container || !activeTab) return
+
+  const containerBounds = container.getBoundingClientRect()
+  const activeBounds = activeTab.getBoundingClientRect()
+  indicatorStyle.value = {
+    width: `${activeBounds.width}px`,
+    height: `${activeBounds.height}px`,
+    transform: `translate3d(${activeBounds.left - containerBounds.left}px, ${activeBounds.top - containerBounds.top}px, 0)`
+  }
+}
+
+watch(() => props.selectedTab, () => nextTick(updateIndicatorPosition), { flush: 'post' })
+
+onMounted(() => {
+  nextTick(updateIndicatorPosition)
+  window.addEventListener('resize', updateIndicatorPosition)
+  if (tabContainer.value) {
+    tabResizeObserver = new ResizeObserver(updateIndicatorPosition)
+    tabResizeObserver.observe(tabContainer.value)
+  }
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateIndicatorPosition)
+  tabResizeObserver?.disconnect()
+})
 </script>
 
 <template>
   <nav class="tab-navigation">
-    <div class="tab-container">
+    <div ref="tabContainer" class="tab-container">
+      <span class="tab-indicator" :style="indicatorStyle" aria-hidden="true" />
       <button
         v-for="tab in tabs"
         :key="tab.name"
@@ -47,11 +82,6 @@ type TabName = typeof tabs[number]['name']
       </button>
     </div>
     
-    <button v-if="selectedTab !== 'Recap'" class="add-button mobile-add" @click="$emit('toggle-add')" aria-label="Add Item">
-      <PlusIcon />
-      <span class="add-label">Add item</span>
-    </button>
-
     <div class="settings-footer">
       <button
         class="settings-button"
@@ -72,7 +102,7 @@ type TabName = typeof tabs[number]['name']
   justify-content: center;
   align-items: center;
   gap: 1rem;
-  padding: 0.75rem 1rem;
+  padding: 1rem 1rem;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
 }
@@ -84,6 +114,10 @@ type TabName = typeof tabs[number]['name']
   border-radius: 24px;
   padding: 0.3rem;
   position: relative;
+}
+
+.tab-indicator {
+  display: none;
 }
 
 .tab-label {
@@ -110,8 +144,8 @@ type TabName = typeof tabs[number]['name']
 }
 
 .tab-icon {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   stroke-width: 2;
   display: flex;
   align-items: center;
@@ -136,58 +170,8 @@ type TabName = typeof tabs[number]['name']
   font-weight: 700;
 }
 
-.add-button {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: #ff8c69;
-  border: none;
-  color: #051515;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  flex-shrink: 0;
-  font-family: var(--font-ui);
-  font-size: calc(0.95rem + 2pt);
-  font-weight: 500;
-}
-
-.add-label {
-  display: none;
-}
-
 .settings-footer {
   display: none;
-}
-
-@media (min-width: 768px) {
-  .mobile-add {
-    display: none;
-  }
-}
-
-@media (max-width: 767px) {
-  .sidebar-add {
-    display: none;
-  }
-}
-
-.add-button :deep(svg) {
-  width: 24px;
-  height: 24px;
-  stroke-width: 2;
-}
-
-.add-button:hover {
-  background: #ff7a52;
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(255, 140, 105, 0.3);
-}
-
-.add-button:active {
-  transform: scale(0.95);
 }
 
 body.light-mode .tab.active {
@@ -199,7 +183,7 @@ body.light-mode .tab.active {
   .tab-navigation {
     justify-content: space-between;
     gap: 0.5rem;
-    padding: 0.75rem;
+    padding: 1rem 0.75rem;
   }
 
   .tab-container {
@@ -213,15 +197,6 @@ body.light-mode .tab.active {
     font-size: calc(0.77rem + 2pt);
   }
 
-  .tab-icon {
-    width: 16px;
-    height: 16px;
-  }
-
-  .add-button {
-    width: 40px;
-    height: 40px;
-  }
 }
 
 @media (min-width: 1024px) {
@@ -295,6 +270,19 @@ body.light-mode .tab.active {
     width: auto;
     min-width: 0;
     justify-content: space-between;
+    border-radius: 999px;
+  }
+
+  .tab-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    display: block;
+    border-radius: 999px;
+    background: var(--selected-surface);
+    pointer-events: none;
+    transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .tab {
@@ -303,10 +291,32 @@ body.light-mode .tab.active {
     justify-content: center;
     padding-right: 0.25rem;
     padding-left: 0.25rem;
+    border-radius: 999px;
+  }
+
+  .tab-icon {
+    flex: 0 0 20px;
+    width: 20px;
+    height: 20px;
   }
 
   .tab.active {
     flex: 1.5;
+    flex-direction: column;
+    gap: 0.125rem;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  body.light-mode .tab.active {
+    background: transparent;
+    box-shadow: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tab-indicator {
+      transition: none;
+    }
   }
 }
 
@@ -327,15 +337,6 @@ body.light-mode .tab.active {
     padding: 0.2rem;
   }
 
-  .tab-icon {
-    width: 16px;
-    height: 16px;
-  }
-
-  .add-button {
-    width: 40px;
-    height: 40px;
-  }
 }
 
 @media (max-width: 360px) {
@@ -355,14 +356,5 @@ body.light-mode .tab.active {
     font-size: calc(0.7rem + 2pt);
   }
 
-  .tab-icon {
-    width: 14px;
-    height: 14px;
-  }
-
-  .add-button {
-    width: 36px;
-    height: 36px;
-  }
 }
 </style>

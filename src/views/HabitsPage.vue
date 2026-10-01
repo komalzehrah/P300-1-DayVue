@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, inject, ref, type Ref } from 'vue'
-import { CheckIcon, PencilSquareIcon } from '@heroicons/vue/24/outline'
+import { CheckIcon } from '@heroicons/vue/24/outline'
+import { StarIcon as FilledStarIcon } from '@heroicons/vue/24/solid'
+import { PhPencilSimple } from '@phosphor-icons/vue'
 import AddItemModal from '../components/AddItemModal.vue'
 import type { DatedHabit } from '../data/fakeEntries'
 
@@ -167,23 +169,29 @@ const deleteHabit = (habitId: string) => {
     </div>
     <div v-else class="habits-list">
       <article v-for="habit in visibleHabits" :key="habit.id" class="habit-card">
-        <button
-          class="habit-stamp"
-          :class="{ logged: isLogged(habit, selectedDate) }"
-          :disabled="!canLog(habit, selectedDate)"
-          :aria-label="isLogged(habit, selectedDate) ? `Unlog ${habit.title} for selected day` : `Log ${habit.title} for selected day`"
-          @click="toggleSelectedDay(habit)"
-        >
-          <CheckIcon v-if="isLogged(habit, selectedDate)" />
-        </button>
         <div class="habit-card-content">
           <header class="habit-card-heading">
             <div class="habit-title-group">
+              <button
+                class="habit-stamp"
+                :disabled="!canLog(habit, selectedDate)"
+                :aria-pressed="isLogged(habit, selectedDate)"
+                :aria-label="isLogged(habit, selectedDate) ? `Unlog ${habit.title} for selected day` : `Log ${habit.title} for selected day`"
+                @click="toggleSelectedDay(habit)"
+              >
+                <span class="habit-stamp-indicator" :class="{ logged: isLogged(habit, selectedDate) }">
+                  <Transition name="habit-check">
+                    <span v-if="isLogged(habit, selectedDate)" class="habit-check-mark" aria-hidden="true">
+                      <CheckIcon />
+                    </span>
+                  </Transition>
+                </span>
+              </button>
               <h2>{{ habit.title }}</h2>
               <span class="consistency-chip">{{ habitConsistency(habit) }}% consistent</span>
             </div>
             <button class="edit-habit" :aria-label="`Edit ${habit.title}`" title="Edit habit" @click="openEditor(habit)">
-              <PencilSquareIcon />
+              <PhPencilSimple />
             </button>
           </header>
           <div class="habit-days" :aria-label="`${monthData.label} log for ${habit.title}`">
@@ -197,9 +205,8 @@ const deleteHabit = (habitId: string) => {
               :title="day.date"
             >
               <span>{{ day.day }}</span>
-              <span class="habit-day-circle">
-                <CheckIcon v-if="isLogged(habit, day.date)" />
-              </span>
+              <FilledStarIcon v-if="isLogged(habit, day.date)" class="habit-day-star" aria-hidden="true" />
+              <span v-else class="habit-day-circle" aria-hidden="true" />
             </span>
           </div>
         </div>
@@ -315,9 +322,9 @@ const deleteHabit = (habitId: string) => {
   align-items: flex-start;
   gap: 0.75rem;
   min-width: 0;
-  padding: 1rem;
+  padding: 0.6rem 0.9rem 1rem;
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--bg-secondary);
   transition:
     background 0.2s ease,
@@ -330,22 +337,43 @@ const deleteHabit = (habitId: string) => {
 
 .habit-stamp {
   display: grid;
-  flex: 0 0 24px;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  margin-right: -0.375rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.habit-stamp-indicator {
+  display: grid;
   width: 24px;
   height: 24px;
   place-items: center;
-  margin-top: 0.15rem;
   border: 2px solid var(--text-secondary);
   border-radius: 50%;
   background: transparent;
   color: #051515;
-  cursor: pointer;
   transition:
     background 0.2s ease,
-    border-color 0.2s ease;
+    border-color 0.2s ease,
+    transform 120ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-.habit-stamp.logged {
+.habit-stamp:active .habit-stamp-indicator {
+  transform: scale(0.92);
+}
+
+.habit-stamp:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 1px;
+}
+
+.habit-stamp-indicator.logged {
   border-color: var(--accent-color);
   background: var(--selected-surface);
 }
@@ -359,6 +387,29 @@ const deleteHabit = (habitId: string) => {
   width: 16px;
   height: 16px;
   stroke-width: 2.5;
+}
+
+.habit-check-mark {
+  display: grid;
+  width: 16px;
+  height: 16px;
+  place-items: center;
+}
+
+.habit-check-enter-active {
+  transition:
+    opacity 0.18s ease-out,
+    transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.habit-check-enter-from {
+  opacity: 0;
+  transform: scale(0.65);
+}
+
+.habit-check-enter-to {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .habit-card-content {
@@ -401,7 +452,7 @@ const deleteHabit = (habitId: string) => {
   background: var(--bg-tertiary);
   color: var(--text-secondary);
   font-family: var(--font-ui);
-  font-size: calc(0.66rem + 2pt);
+  font-size: 0.66rem;
   font-weight: 500;
   white-space: nowrap;
 }
@@ -438,12 +489,9 @@ const deleteHabit = (habitId: string) => {
 }
 
 .habit-day {
+  display: flex;
   width: 32px;
   min-height: 38px;
-}
-
-.habit-day {
-  display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -471,22 +519,27 @@ const deleteHabit = (habitId: string) => {
   background: transparent;
 }
 
-.habit-day.logged .habit-day-circle {
-  border-color: var(--accent-color);
-  background: var(--selected-surface);
-  color: #051515;
+.habit-day-star {
+  width: 16px;
+  height: 16px;
+  color: var(--accent-color);
 }
 
-.habit-day-circle :deep(svg) {
-  width: 10px;
-  height: 10px;
-  stroke-width: 2.5;
+@media (prefers-reduced-motion: reduce) {
+  .habit-stamp-indicator,
+  .habit-check-enter-active {
+    transition: none;
+  }
+
+  .habit-stamp:active .habit-stamp-indicator {
+    transform: none;
+  }
 }
 
 .previous-habits-toggle {
   display: block;
-  margin: 0 auto;
-  padding: 0.35rem 0.5rem;
+  margin: 0;
+  padding: 0.35rem 0;
   border: 0;
   background: transparent;
   color: var(--text-secondary);
@@ -526,7 +579,7 @@ const deleteHabit = (habitId: string) => {
 .previous-habit-card {
   padding: 0.85rem 1rem;
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--bg-secondary);
 }
 
@@ -600,8 +653,7 @@ const deleteHabit = (habitId: string) => {
 
 @media (max-width: 360px) {
   .habit-card {
-    gap: 0.5rem;
-    padding: 0.75rem;
+    gap: 0.75rem;
   }
 
   .habit-days {

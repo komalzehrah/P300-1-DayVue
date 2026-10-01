@@ -105,15 +105,17 @@ const toggleDarkMode = () => {
 }
 
 .close-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
   color: var(--text-primary);
+  cursor: pointer;
   transition: color 0.2s ease;
-  padding: 0.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .close-btn:hover {
@@ -121,8 +123,9 @@ const toggleDarkMode = () => {
 }
 
 .close-btn :deep(svg) {
-  width: 24px;
-  height: 24px;
+  width: 16px;
+  height: 16px;
+  transform: translateX(4px);
   stroke-width: 2;
 }
 
