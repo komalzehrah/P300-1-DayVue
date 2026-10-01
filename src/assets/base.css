@@ -54,3 +54,17 @@ body:not(.light-mode) input[type="time"]::-webkit-calendar-picker-indicator {
 body.light-mode #app select {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%233a5a59' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 }
+
+body:not(.light-mode) #app input[type="number"]::-webkit-outer-spin-button,
+body:not(.light-mode) #app input[type="number"]::-webkit-inner-spin-button {
+  opacity: 1;
+  filter: invert(87%) sepia(28%) saturate(589%) hue-rotate(9deg) brightness(99%)
+    contrast(91%);
+}
+
+body.light-mode #app input[type="number"]::-webkit-outer-spin-button,
+body.light-mode #app input[type="number"]::-webkit-inner-spin-button {
+  opacity: 1;
+  filter: invert(20%) sepia(8%) saturate(150%) hue-rotate(180deg) brightness(90%)
+    contrast(100%);
+}
