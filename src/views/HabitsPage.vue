@@ -159,11 +159,6 @@ const deleteHabit = (habitId: string) => {
 
 <template>
   <div class="habits-container">
-    <header class="habits-heading">
-      <h1>Habit Tracker</h1>
-      <span>{{ monthData.label }}</span>
-    </header>
-
     <div v-if="visibleHabits.length === 0" class="empty-state">
       <p>No habits yet. Add one to get started!</p>
     </div>
@@ -272,30 +267,6 @@ const deleteHabit = (habitId: string) => {
   gap: 1rem;
   overflow-y: auto;
   padding: 1rem;
-}
-
-.habits-heading {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  width: 100%;
-  max-width: 960px;
-  margin: 0 auto;
-}
-
-.habits-heading h1 {
-  margin: 0;
-  color: var(--text-primary);
-  font-family: var(--font-body);
-  font-size: calc(1.2rem + 2pt);
-  font-weight: 400;
-}
-
-.habits-heading > span {
-  color: var(--text-secondary);
-  font-family: var(--font-ui);
-  font-size: calc(0.8rem + 2pt);
 }
 
 .habits-list {

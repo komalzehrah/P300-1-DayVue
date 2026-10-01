@@ -63,7 +63,7 @@ const scheduleIcons: Record<string, Component> = {
 const getScheduleIcon = (name?: string) => scheduleIcons[name ?? 'ClockIcon'] ?? ClockIcon
 
 type CalendarView = 'daily' | 'weekly' | 'monthly'
-const pixelsPerHour = 120
+const pixelsPerHour = 90
 const pixelsPerMinute = pixelsPerHour / 60
 const eventCardMargin = 1
 const hourLineGap = 1
@@ -76,7 +76,7 @@ const selectedDate = inject<Ref<string>>(
   'selectedDate',
   ref(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`)
 )
-const calendarView = ref<CalendarView>('daily')
+const calendarView = inject<Ref<CalendarView>>('scheduleView', ref<CalendarView>('daily'))
 const currentTime = ref(new Date())
 const dragOffsetFromTop = ref(0)
 const showEditModal = ref(false)
@@ -85,12 +85,6 @@ const gridContainer = ref<HTMLElement | null>(null)
 const draggedItemId = ref('')
 const suppressClickId = ref('')
 let currentTimeTimer: number | undefined
-const calendarViews: Array<{ id: CalendarView; label: string }> = [
-  { id: 'daily', label: 'Daily' },
-  { id: 'weekly', label: 'Weekly' },
-  { id: 'monthly', label: 'Monthly' }
-]
-
 const parseDate = (value: string) => {
   const [year = 1970, month = 1, day = 1] = value.split('-').map(Number)
   return new Date(year, month - 1, day)
@@ -103,30 +97,32 @@ const isTodaySelected = computed(() => selectedDate.value === formatDate(current
 const currentTimePosition = computed(() => `${(currentTime.value.getHours() * 60 + currentTime.value.getMinutes()) * pixelsPerMinute}px`)
 const currentTimeLabel = computed(() => currentTime.value.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }))
 
-const scrollCurrentTimeIntoView = () => {
-  if (calendarView.value !== 'daily' || !isTodaySelected.value) return
+const scrollToDailyPosition = () => {
+  if (calendarView.value !== 'daily') return
 
   nextTick(() => {
     const container = scheduleContainer.value
-    const marker = currentTimeLine.value
-    if (!container || !marker) return
+    const target = isTodaySelected.value
+      ? currentTimeLine.value
+      : container?.querySelectorAll<HTMLElement>('.time-slot')[7]
+    if (!container || !target) return
 
     const containerBounds = container.getBoundingClientRect()
-    const markerOffset = marker.getBoundingClientRect().top - containerBounds.top + container.scrollTop
+    const targetOffset = target.getBoundingClientRect().top - containerBounds.top + container.scrollTop
     container.scrollTo({
-      top: Math.max(0, markerOffset - container.clientHeight * 0.45),
-      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+      top: Math.max(0, targetOffset - (isTodaySelected.value ? container.clientHeight * 0.45 : 0)),
+      behavior: isTodaySelected.value && !window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'smooth' : 'auto'
     })
   })
 }
 
-watch([calendarView, isTodaySelected], scrollCurrentTimeIntoView, { flush: 'post' })
+watch([calendarView, selectedDate, isTodaySelected], scrollToDailyPosition, { flush: 'post' })
 
 onMounted(() => {
   currentTimeTimer = window.setInterval(() => {
     currentTime.value = new Date()
   }, 60_000)
-  scrollCurrentTimeIntoView()
+  scrollToDailyPosition()
 })
 
 onBeforeUnmount(() => {
@@ -417,22 +413,6 @@ const deleteItem = (itemId: string) => {
 
 <template>
   <div ref="scheduleContainer" class="schedule-container">
-    <header class="schedule-heading">
-      <h1>Schedule</h1>
-      <div class="calendar-view-switch" role="group" aria-label="Calendar view">
-        <button
-          v-for="view in calendarViews"
-          :key="view.id"
-          class="view-option"
-          :class="{ active: calendarView === view.id }"
-          :aria-pressed="calendarView === view.id"
-          @click="calendarView = view.id"
-        >
-          {{ view.label }}
-        </button>
-      </div>
-    </header>
-
     <div v-if="calendarView !== 'daily'" class="calendar-toolbar">
       <span class="calendar-period">{{ calendarPeriod }}</span>
     </div>
@@ -581,24 +561,6 @@ const deleteItem = (itemId: string) => {
   background: var(--bg-primary);
 }
 
-.schedule-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  width: 100%;
-  max-width: 960px;
-  margin: 0 auto 1rem;
-}
-
-.schedule-heading h1 {
-  margin: 0;
-  color: var(--text-primary);
-  font-family: var(--font-body);
-  font-size: calc(1.2rem + 2pt);
-  font-weight: 400;
-}
-
 .calendar-toolbar {
   display: flex;
   align-items: center;
@@ -614,40 +576,6 @@ const deleteItem = (itemId: string) => {
   width: 100%;
   max-width: 960px;
   margin-inline: auto;
-}
-
-.calendar-view-switch {
-  display: inline-flex;
-  gap: 0.2rem;
-  padding: 0.125rem;
-  border: 1px solid var(--border-color);
-  border-radius: 9px;
-  background: var(--bg-secondary);
-}
-
-.view-option {
-  min-height: 30px;
-  padding: 0.25rem 0.7rem;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-family: var(--font-ui);
-  font-size: calc(0.85rem + 2pt);
-  font-weight: 500;
-  transition:
-    background 0.2s ease,
-    color 0.2s ease;
-}
-
-.view-option:hover {
-  color: var(--text-primary);
-}
-
-.view-option.active {
-  background: var(--selected-surface);
-  color: #000;
 }
 
 .calendar-period {
@@ -1088,7 +1016,7 @@ const deleteItem = (itemId: string) => {
 }
 
 .hour-label {
-  height: 120px;
+  height: 90px;
   display: flex;
   align-items: flex-start;
   justify-content: flex-end;
@@ -1111,7 +1039,7 @@ const deleteItem = (itemId: string) => {
 }
 
 .time-slot {
-  height: 120px;
+  height: 90px;
   border-bottom: 1px solid var(--border-color);
   position: relative;
 }

@@ -5,12 +5,23 @@ import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, PlusIcon } from '@h
 const props = defineProps<{
   modelValue: string
   showAddItem?: boolean
+  showScheduleView?: boolean
+  scheduleView?: 'daily' | 'weekly' | 'monthly'
+  pageTitle?: string
+  pageSubtitle?: string
 }>()
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
+  'update:scheduleView': [value: 'daily' | 'weekly' | 'monthly']
   'add-item': []
 }>()
+
+const scheduleViews: Array<{ id: 'daily' | 'weekly' | 'monthly'; label: string }> = [
+  { id: 'daily', label: 'Daily' },
+  { id: 'weekly', label: 'Weekly' },
+  { id: 'monthly', label: 'Monthly' }
+]
 
 const showDatePicker = ref(false)
 const parseDate = (value: string) => {
@@ -26,8 +37,8 @@ const pickerDate = ref(parseDate(props.modelValue))
 const currentDateDisplay = computed(() => {
   const date = parseDate(props.modelValue)
   return {
-    dayName: date.toLocaleDateString('en-US', { weekday: 'long' }),
-    month: date.toLocaleDateString('en-US', { month: 'long' }),
+    dayName: date.toLocaleDateString('en-US', { weekday: 'short' }),
+    month: date.toLocaleDateString('en-US', { month: 'short' }),
     day: date.getDate(),
     year: date.getFullYear()
   }
@@ -77,11 +88,11 @@ const isSelected = (date: Date | null) => {
 </script>
 
 <template>
-  <header class="date-header">
+  <header class="date-header" :class="{ 'has-page-title-row': props.pageTitle }">
     <div class="date-display">
       <div class="date-group">
         <span class="date-text">
-          {{ currentDateDisplay.dayName }}
+          {{ currentDateDisplay.dayName }},
           <span class="date-highlight">{{ currentDateDisplay.month }} {{ currentDateDisplay.day }},</span>
           {{ currentDateDisplay.year }}
         </span>
@@ -132,6 +143,27 @@ const isSelected = (date: Date | null) => {
         <span>Add Item</span>
       </button>
     </div>
+
+    <div v-if="props.pageTitle" class="page-title-row">
+      <div class="page-title-content">
+        <h1>{{ props.pageTitle }}</h1>
+        <slot name="header-trailing">
+          <span v-if="props.pageSubtitle" class="page-title-subtitle">{{ props.pageSubtitle }}</span>
+        </slot>
+        <div v-if="props.showScheduleView" class="schedule-view-switch" role="group" aria-label="Calendar view">
+          <button
+            v-for="view in scheduleViews"
+            :key="view.id"
+            class="schedule-view-option"
+            :class="{ active: props.scheduleView === view.id }"
+            :aria-pressed="props.scheduleView === view.id"
+            @click="emit('update:scheduleView', view.id)"
+          >
+            {{ view.label }}
+          </button>
+        </div>
+      </div>
+    </div>
   </header>
 
   <div v-if="showDatePicker" class="date-picker-backdrop" @click="showDatePicker = false" />
@@ -143,7 +175,11 @@ const isSelected = (date: Date | null) => {
   flex: 0 0 auto;
   z-index: 100;
   padding: 1rem;
-  background: var(--bg-primary);
+  background: var(--bg-secondary);
+}
+
+.date-header.has-page-title-row {
+  padding-bottom: 0.75rem;
 }
 
 .date-display {
@@ -151,6 +187,94 @@ const isSelected = (date: Date | null) => {
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
+}
+
+.page-title-row {
+  box-sizing: border-box;
+  width: calc(100% + 2rem);
+  margin: 0.75rem -1rem 0;
+  padding: 0.75rem 1rem 0;
+  border-top: 1px solid var(--border-color);
+}
+
+.page-title-content {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+}
+
+.page-title-content h1 {
+  margin: 0;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: calc(1.2rem + 2pt);
+  font-weight: 400;
+}
+
+.page-title-subtitle {
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: calc(0.8rem + 2pt);
+}
+
+.page-title-content :slotted(.sort-control) {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: calc(0.78rem + 2pt);
+}
+
+.page-title-content :slotted(.sort-select) {
+  box-sizing: border-box;
+  height: 26px;
+  min-height: 26px;
+  padding: 0.15rem 0.55rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.schedule-view-switch {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 0.1rem;
+  padding: 0.1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 9px;
+  background: var(--bg-secondary);
+}
+
+.schedule-view-option {
+  min-height: 26px;
+  padding: 0.15rem 0.55rem;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.schedule-view-option:hover {
+  color: var(--text-primary);
+}
+
+.schedule-view-option.active {
+  background: var(--selected-surface);
+  color: #000;
 }
 
 .date-group {
@@ -162,7 +286,7 @@ const isSelected = (date: Date | null) => {
 .date-text {
   color: var(--text-primary);
   font-family: var(--font-ui);
-  font-size: calc(16px + 2pt);
+  font-size: 16px;
   font-weight: 500;
   letter-spacing: 0.02em;
 }
@@ -182,9 +306,7 @@ const isSelected = (date: Date | null) => {
   background: transparent;
   color: var(--accent-color);
   cursor: pointer;
-  transition:
-    color 0.2s ease,
-    transform 0.2s ease;
+  transition: color 0.2s ease, transform 0.2s ease;
 }
 
 .date-picker-btn:hover,
@@ -211,11 +333,9 @@ const isSelected = (date: Date | null) => {
   color: #051515;
   cursor: pointer;
   font-family: var(--font-ui);
-  font-size: calc(0.9rem + 2pt);
+  font-size: 0.9rem;
   font-weight: 500;
-  transition:
-    background 0.2s ease,
-    transform 0.2s ease;
+  transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .date-add-button:hover {
@@ -269,7 +389,7 @@ const isSelected = (date: Date | null) => {
   margin: 0;
   color: var(--text-primary);
   font-family: var(--font-body);
-  font-size: calc(1.1rem + 2pt);
+  font-size: 1.1rem;
   font-weight: 600;
   text-align: center;
 }
@@ -290,7 +410,7 @@ const isSelected = (date: Date | null) => {
   padding: 0.5rem 0;
   color: var(--text-secondary);
   font-family: var(--font-body);
-  font-size: calc(0.75rem + 2pt);
+  font-size: 0.75rem;
   font-weight: 600;
   text-align: center;
 }
@@ -303,7 +423,7 @@ const isSelected = (date: Date | null) => {
   color: var(--text-primary);
   cursor: pointer;
   font-family: var(--font-ui);
-  font-size: calc(0.9rem + 2pt);
+  font-size: 0.9rem;
   font-weight: 500;
 }
 
@@ -354,6 +474,12 @@ const isSelected = (date: Date | null) => {
   .date-header {
     padding: 1.25rem 2rem;
     border-bottom: 1px solid var(--border-color);
+  }
+
+  .page-title-row {
+    width: calc(100% + 4rem);
+    margin-inline: -2rem;
+    padding-inline: 2rem;
   }
 
   .date-display {

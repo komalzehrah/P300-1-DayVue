@@ -12,6 +12,7 @@ import { sampleHabits, sampleScheduleItems, sampleTasks, type DatedHabit, type D
 
 const router = useRouter()
 type NavigationPage = 'Schedule' | 'Tasks' | 'Habits' | 'Recap'
+type ScheduleView = 'daily' | 'weekly' | 'monthly'
 
 const showSettingsDrawer = ref(false)
 const showAddModal = ref(false)
@@ -23,6 +24,20 @@ const today = new Date()
 const selectedDate = ref(
   `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
 )
+const taskSortBy = ref<'priority' | 'progress'>('priority')
+const scheduleView = ref<ScheduleView>('daily')
+const pageTitle = computed(() => ({
+  Schedule: 'Schedule',
+  Tasks: 'Daily Tasks',
+  Habits: 'Habit Tracker',
+  Recap: undefined
+})[selectedTab.value])
+const habitsHeaderMonth = computed(() => {
+  const [year = 1970, month = 1, day = 1] = selectedDate.value.split('-').map(Number)
+  return selectedTab.value === 'Habits'
+    ? new Date(year, month - 1, day).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    : undefined
+})
 const dashboardDateRange = reactive({ startDate: '2026-03-01', endDate: '2026-07-31' })
 const scheduleItems = ref<DatedScheduleItem[]>([...sampleScheduleItems])
 const tasks = ref<DatedTask[]>([...sampleTasks])
@@ -30,6 +45,8 @@ const habits = ref<DatedHabit[]>([...sampleHabits])
 
 provide('scheduleItems', scheduleItems)
 provide('selectedDate', selectedDate)
+provide('scheduleView', scheduleView)
+provide('taskSortBy', taskSortBy)
 provide('dashboardDateRange', dashboardDateRange)
 provide('tasks', tasks)
 provide('habits', habits)
@@ -117,9 +134,23 @@ const closeSettings = () => {
       <DatePickerHeader
         v-else
         v-model="selectedDate"
+        v-model:schedule-view="scheduleView"
         :show-add-item="true"
+        :show-schedule-view="selectedTab === 'Schedule'"
+        :page-title="pageTitle"
+        :page-subtitle="habitsHeaderMonth"
         @add-item="toggleAddModal"
-      />
+      >
+        <template #header-trailing v-if="selectedTab === 'Tasks'">
+          <label class="sort-control" for="task-sort">
+            <span>Sort by</span>
+            <select id="task-sort" v-model="taskSortBy" class="sort-select">
+              <option value="priority">Priority</option>
+              <option value="progress">Progress</option>
+            </select>
+          </label>
+        </template>
+      </DatePickerHeader>
       <div class="page-content">
         <RouterView />
       </div>

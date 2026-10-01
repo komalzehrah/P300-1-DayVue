@@ -32,7 +32,7 @@ interface TaskEditPayload {
 
 const tasks = inject<Ref<Task[]>>('tasks', ref<Task[]>([]))
 const selectedDate = inject<Ref<string>>('selectedDate', ref(''))
-const sortBy = ref<'priority' | 'progress'>('priority')
+const sortBy = inject<Ref<'priority' | 'progress'>>('taskSortBy', ref<'priority' | 'progress'>('priority'))
 const editedTask = ref<Task | null>(null)
 
 const priorityOrder: Record<TaskPriority, number> = { high: 0, medium: 1, low: 2 }
@@ -93,17 +93,6 @@ const deleteTask = (taskId: string) => {
 
 <template>
   <div class="tasks-container">
-    <header class="tasks-toolbar">
-      <h1>Daily Tasks</h1>
-      <label class="sort-control" for="task-sort">
-        <span>Sort by</span>
-        <select id="task-sort" v-model="sortBy">
-          <option value="priority">Priority</option>
-          <option value="progress">Progress</option>
-        </select>
-      </label>
-    </header>
-
     <div v-if="visibleTasks.length === 0" class="empty-state">
       <p>No tasks yet. Add one to get started!</p>
     </div>
@@ -164,44 +153,6 @@ const deleteTask = (taskId: string) => {
   overflow-y: auto;
   height: 100%;
   min-height: 0;
-}
-
-.tasks-toolbar {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  width: 100%;
-  max-width: 960px;
-  margin: 0 auto;
-}
-
-.tasks-toolbar h1 {
-  margin: 0;
-  color: var(--text-primary);
-  font-family: var(--font-body);
-  font-size: calc(1.2rem + 2pt);
-  font-weight: 400;
-}
-
-.sort-control {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--text-secondary);
-  font-family: var(--font-body);
-  font-size: calc(0.78rem + 2pt);
-}
-
-.sort-control select {
-  min-height: 38px;
-  padding: 0.5rem 0.65rem;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-  font-family: var(--font-body);
-  font-size: calc(0.85rem + 2pt);
 }
 
 .tasks-list {
