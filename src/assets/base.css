@@ -65,6 +65,6 @@ body:not(.light-mode) #app input[type="number"]::-webkit-inner-spin-button {
 body.light-mode #app input[type="number"]::-webkit-outer-spin-button,
 body.light-mode #app input[type="number"]::-webkit-inner-spin-button {
   opacity: 1;
-  filter: invert(20%) sepia(8%) saturate(150%) hue-rotate(180deg) brightness(90%)
-    contrast(100%);
+  filter: invert(20%) sepia(8%) saturate(150%) hue-rotate(180deg)
+    brightness(90%) contrast(100%);
 }

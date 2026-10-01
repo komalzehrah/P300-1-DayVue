@@ -1,27 +1,17 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, PlusIcon } from '@heroicons/vue/24/outline'
+import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps<{
   modelValue: string
-  showAddItem?: boolean
   showScheduleView?: boolean
   scheduleView?: 'daily' | 'weekly' | 'monthly'
-  pageTitle?: string
-  pageSubtitle?: string
 }>()
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
   'update:scheduleView': [value: 'daily' | 'weekly' | 'monthly']
-  'add-item': []
 }>()
-
-const scheduleViews: Array<{ id: 'daily' | 'weekly' | 'monthly'; label: string }> = [
-  { id: 'daily', label: 'Daily' },
-  { id: 'weekly', label: 'Weekly' },
-  { id: 'monthly', label: 'Monthly' }
-]
 
 const showDatePicker = ref(false)
 const parseDate = (value: string) => {
@@ -88,82 +78,53 @@ const isSelected = (date: Date | null) => {
 </script>
 
 <template>
-  <header class="date-header" :class="{ 'has-page-title-row': props.pageTitle }">
-    <div class="date-display">
-      <div class="date-group">
-        <span class="date-text">
-          {{ currentDateDisplay.dayName }},
-          <span class="date-highlight">{{ currentDateDisplay.month }} {{ currentDateDisplay.day }},</span>
-          {{ currentDateDisplay.year }}
-        </span>
-        <div class="date-picker-anchor">
-          <button class="date-picker-btn" @click="openDatePicker" aria-label="Open date picker" title="Open date picker">
-            <ChevronDownIcon />
+  <header class="date-header">
+    <div class="date-group">
+      <span class="date-text">
+        {{ currentDateDisplay.dayName }},
+        <span class="date-highlight">{{ currentDateDisplay.month }} {{ currentDateDisplay.day }},</span>
+        {{ currentDateDisplay.year }}
+      </span>
+      <div class="date-picker-anchor">
+        <button class="date-picker-btn" @click="openDatePicker" aria-label="Open date picker" title="Open date picker">
+          <ChevronDownIcon />
+        </button>
+        <div v-if="showDatePicker" class="date-picker-modal">
+        <div class="date-picker-header">
+          <button class="nav-btn" @click="previousMonth" aria-label="Previous month">
+            <ChevronLeftIcon />
           </button>
-          <div v-if="showDatePicker" class="date-picker-modal">
-          <div class="date-picker-header">
-            <button class="nav-btn" @click="previousMonth" aria-label="Previous month">
-              <ChevronLeftIcon />
-            </button>
-            <h2 class="month-year">{{ pickerMonthYear }}</h2>
-            <button class="nav-btn" @click="nextMonth" aria-label="Next month">
-              <ChevronRightIcon />
-            </button>
-          </div>
-
-          <div class="calendar-grid">
-            <div v-for="day in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" :key="day" class="weekday-header">
-              {{ day }}
-            </div>
-            <button
-              v-for="(day, index) in calendarDays"
-              :key="index"
-              class="calendar-day"
-              :class="{ empty: !day, selected: day && isSelected(day) }"
-              :disabled="!day"
-              @click="day && selectDate(day)"
-            >
-              {{ day?.getDate() ?? '' }}
-            </button>
-          </div>
-
-          <div class="date-picker-footer">
-            <button class="today-btn" @click="selectToday">Today</button>
-            <button class="cancel-btn" @click="showDatePicker = false">Cancel</button>
-          </div>
-          </div>
+          <h2 class="month-year">{{ pickerMonthYear }}</h2>
+          <button class="nav-btn" @click="nextMonth" aria-label="Next month">
+            <ChevronRightIcon />
+          </button>
         </div>
-      </div>
-      <button
-        v-if="showAddItem"
-        class="date-add-button"
-        @click="emit('add-item')"
-      >
-        <PlusIcon />
-        <span>Add Item</span>
-      </button>
-    </div>
 
-    <div v-if="props.pageTitle" class="page-title-row">
-      <div class="page-title-content">
-        <h1>{{ props.pageTitle }}</h1>
-        <slot name="header-trailing">
-          <span v-if="props.pageSubtitle" class="page-title-subtitle">{{ props.pageSubtitle }}</span>
-        </slot>
-        <div v-if="props.showScheduleView" class="schedule-view-switch" role="group" aria-label="Calendar view">
+        <div class="calendar-grid">
+          <div v-for="day in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" :key="day" class="weekday-header">
+            {{ day }}
+          </div>
           <button
-            v-for="view in scheduleViews"
-            :key="view.id"
-            class="schedule-view-option"
-            :class="{ active: props.scheduleView === view.id }"
-            :aria-pressed="props.scheduleView === view.id"
-            @click="emit('update:scheduleView', view.id)"
+            v-for="(day, index) in calendarDays"
+            :key="index"
+            class="calendar-day"
+            :class="{ empty: !day, selected: day && isSelected(day) }"
+            :disabled="!day"
+            @click="day && selectDate(day)"
           >
-            {{ view.label }}
+            {{ day?.getDate() ?? '' }}
           </button>
+        </div>
+
+        <div class="date-picker-footer">
+          <button class="today-btn" @click="selectToday">Today</button>
+          <button class="cancel-btn" @click="showDatePicker = false">Cancel</button>
+        </div>
         </div>
       </div>
     </div>
+
+    <slot name="header-trailing" />
   </header>
 
   <div v-if="showDatePicker" class="date-picker-backdrop" @click="showDatePicker = false" />
@@ -176,111 +137,18 @@ const isSelected = (date: Date | null) => {
   z-index: 100;
   padding: 1rem;
   background: var(--bg-secondary);
-}
-
-.date-header.has-page-title-row {
-  padding-bottom: 0.75rem;
-}
-
-.date-display {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-}
-
-.page-title-row {
-  box-sizing: border-box;
-  width: calc(100% + 2rem);
-  margin: 0.75rem -1rem 0;
-  padding: 0.75rem 1rem 0;
-  border-top: 1px solid var(--border-color);
-}
-
-.page-title-content {
-  display: flex;
-  align-items: baseline;
   justify-content: space-between;
   gap: 1rem;
-  width: 100%;
-}
-
-.page-title-content h1 {
-  margin: 0;
-  color: var(--text-primary);
-  font-family: var(--font-body);
-  font-size: calc(1.2rem + 2pt);
-  font-weight: 400;
-}
-
-.page-title-subtitle {
-  color: var(--text-secondary);
-  font-family: var(--font-ui);
-  font-size: calc(0.8rem + 2pt);
-}
-
-.page-title-content :slotted(.sort-control) {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--text-secondary);
-  font-family: var(--font-body);
-  font-size: calc(0.78rem + 2pt);
-}
-
-.page-title-content :slotted(.sort-select) {
-  box-sizing: border-box;
-  height: 26px;
-  min-height: 26px;
-  padding: 0.15rem 0.55rem;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-  font-family: var(--font-ui);
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-
-.schedule-view-switch {
-  display: inline-flex;
-  flex: 0 0 auto;
-  gap: 0.1rem;
-  padding: 0.1rem;
-  border: 1px solid var(--border-color);
-  border-radius: 9px;
-  background: var(--bg-secondary);
-}
-
-.schedule-view-option {
-  min-height: 26px;
-  padding: 0.15rem 0.55rem;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-family: var(--font-ui);
-  font-size: 0.85rem;
-  font-weight: 500;
-  transition:
-    background 0.2s ease,
-    color 0.2s ease;
-}
-
-.schedule-view-option:hover {
-  color: var(--text-primary);
-}
-
-.schedule-view-option.active {
-  background: var(--selected-surface);
-  color: #000;
 }
 
 .date-group {
   display: flex;
   align-items: center;
   gap: 0.35rem;
+  flex: 1;
+  min-width: 0;
 }
 
 .date-text {
@@ -289,6 +157,7 @@ const isSelected = (date: Date | null) => {
   font-size: 16px;
   font-weight: 500;
   letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 .date-highlight {
@@ -307,6 +176,7 @@ const isSelected = (date: Date | null) => {
   color: var(--accent-color);
   cursor: pointer;
   transition: color 0.2s ease, transform 0.2s ease;
+  flex-shrink: 0;
 }
 
 .date-picker-btn:hover,
@@ -318,35 +188,6 @@ const isSelected = (date: Date | null) => {
 .date-picker-btn :deep(svg) {
   width: 18px;
   height: 18px;
-}
-
-.date-add-button {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  gap: 0.45rem;
-  min-height: 40px;
-  padding: 0.55rem 1rem;
-  border: 0;
-  border-radius: 999px;
-  background: #ff8c69;
-  color: #051515;
-  cursor: pointer;
-  font-family: var(--font-ui);
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: background 0.2s ease, transform 0.2s ease;
-}
-
-.date-add-button:hover {
-  transform: translateY(-1px);
-  background: #ff7a52;
-}
-
-.date-add-button :deep(svg) {
-  width: 18px;
-  height: 18px;
-  stroke-width: 2;
 }
 
 .date-picker-anchor {
@@ -476,19 +317,12 @@ const isSelected = (date: Date | null) => {
     border-bottom: 1px solid var(--border-color);
   }
 
-  .page-title-row {
-    width: calc(100% + 4rem);
-    margin-inline: -2rem;
-    padding-inline: 2rem;
+  .date-group {
+    flex: 0 0 auto;
   }
 
-  .date-display {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .date-add-button {
-    display: inline-flex;
+  .date-text {
+    font-size: 16px;
   }
 }
 </style>

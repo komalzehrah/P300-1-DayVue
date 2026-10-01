@@ -14,6 +14,12 @@ const router = useRouter()
 type NavigationPage = 'Schedule' | 'Tasks' | 'Habits' | 'Recap'
 type ScheduleView = 'daily' | 'weekly' | 'monthly'
 
+const scheduleViews: Array<{ id: ScheduleView; label: string }> = [
+  { id: 'daily', label: 'Daily' },
+  { id: 'weekly', label: 'Weekly' },
+  { id: 'monthly', label: 'Monthly' }
+]
+
 const showSettingsDrawer = ref(false)
 const showAddModal = ref(false)
 const selectedTab = computed<NavigationPage>(() => {
@@ -26,18 +32,6 @@ const selectedDate = ref(
 )
 const taskSortBy = ref<'priority' | 'progress'>('priority')
 const scheduleView = ref<ScheduleView>('daily')
-const pageTitle = computed(() => ({
-  Schedule: 'Schedule',
-  Tasks: 'Daily Tasks',
-  Habits: 'Habit Tracker',
-  Recap: undefined
-})[selectedTab.value])
-const habitsHeaderMonth = computed(() => {
-  const [year = 1970, month = 1, day = 1] = selectedDate.value.split('-').map(Number)
-  return selectedTab.value === 'Habits'
-    ? new Date(year, month - 1, day).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-    : undefined
-})
 const dashboardDateRange = reactive({ startDate: '2026-03-01', endDate: '2026-07-31' })
 const scheduleItems = ref<DatedScheduleItem[]>([...sampleScheduleItems])
 const tasks = ref<DatedTask[]>([...sampleTasks])
@@ -135,13 +129,23 @@ const closeSettings = () => {
         v-else
         v-model="selectedDate"
         v-model:schedule-view="scheduleView"
-        :show-add-item="true"
         :show-schedule-view="selectedTab === 'Schedule'"
-        :page-title="pageTitle"
-        :page-subtitle="habitsHeaderMonth"
-        @add-item="toggleAddModal"
       >
-        <template #header-trailing v-if="selectedTab === 'Tasks'">
+        <template v-if="selectedTab === 'Schedule'" #header-trailing>
+          <div class="schedule-view-switch" role="group" aria-label="Calendar view">
+            <button
+              v-for="view in scheduleViews"
+              :key="view.id"
+              class="schedule-view-option"
+              :class="{ active: scheduleView === view.id }"
+              :aria-pressed="scheduleView === view.id"
+              @click="scheduleView = view.id"
+            >
+              {{ view.label }}
+            </button>
+          </div>
+        </template>
+        <template v-else-if="selectedTab === 'Tasks'" #header-trailing>
           <label class="sort-control" for="task-sort">
             <span>Sort by</span>
             <select id="task-sort" v-model="taskSortBy" class="sort-select">
@@ -159,6 +163,17 @@ const closeSettings = () => {
     <button
       v-if="selectedTab !== 'Recap'"
       class="mobile-add-fab"
+      type="button"
+      aria-label="Add Item"
+      title="Add item"
+      @click="toggleAddModal"
+    >
+      <PlusIcon aria-hidden="true" />
+    </button>
+
+    <button
+      v-if="selectedTab !== 'Recap'"
+      class="desktop-add-fab"
       type="button"
       aria-label="Add Item"
       title="Add item"
@@ -229,7 +244,69 @@ const closeSettings = () => {
   z-index: 99;
 }
 
+.schedule-view-switch {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 0.1rem;
+  padding: 0.1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 9px;
+  background: var(--bg-secondary);
+}
+
+.schedule-view-option {
+  min-height: 26px;
+  padding: 0.15rem 0.55rem;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.schedule-view-option:hover {
+  color: var(--text-primary);
+}
+
+.schedule-view-option.active {
+  background: var(--selected-surface);
+  color: #000;
+}
+
+.sort-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: calc(0.78rem + 2pt);
+}
+
+.sort-select {
+  box-sizing: border-box;
+  height: 26px;
+  min-height: 26px;
+  padding: 0.15rem 0.55rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
 .mobile-add-fab {
+  display: none;
+}
+
+.desktop-add-fab {
   display: none;
 }
 
@@ -379,6 +456,52 @@ const closeSettings = () => {
 
   .page-content {
     min-width: 0;
+  }
+
+  .desktop-add-fab {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 80;
+    display: grid;
+    width: 56px;
+    height: 56px;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: #ff8c69;
+    color: #051515;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(5, 21, 21, 0.22);
+    transition:
+      transform 0.15s cubic-bezier(0.16, 1, 0.3, 1),
+      background-color 0.15s ease;
+  }
+
+  .desktop-add-fab:hover {
+    transform: translateY(-2px);
+    background: #ff7a52;
+  }
+
+  .desktop-add-fab:active {
+    transform: scale(0.96);
+  }
+
+  .desktop-add-fab :deep(svg) {
+    width: 24px;
+    height: 24px;
+    stroke-width: 2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desktop-add-fab {
+    transition: none;
+  }
+
+  .desktop-add-fab:hover,
+  .desktop-add-fab:active {
+    transform: none;
   }
 }
 
