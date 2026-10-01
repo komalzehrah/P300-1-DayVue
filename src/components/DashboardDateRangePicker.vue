@@ -1,174 +1,219 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { ArrowRightIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
+import { computed, ref } from "vue";
+import {
+  ArrowRightIcon,
+  ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+} from "@heroicons/vue/24/outline";
 
 const props = defineProps<{
-  startDate: string
-  endDate: string
-}>()
+  startDate: string;
+  endDate: string;
+}>();
 
 const emit = defineEmits<{
-  'update:startDate': [value: string]
-  'update:endDate': [value: string]
-}>()
+  "update:startDate": [value: string];
+  "update:endDate": [value: string];
+}>();
 
-const showPicker = ref(false)
-const draftStartDate = ref('')
-const draftEndDate = ref('')
-const selectedPreset = ref('')
-const viewMonth = ref(new Date(2026, 5, 1))
+const showPicker = ref(false);
+const draftStartDate = ref("");
+const draftEndDate = ref("");
+const selectedPreset = ref("");
+const viewMonth = ref(new Date(2026, 5, 1));
 
-const minDate = '2026-03-01'
-const maxDate = '2026-07-31'
-const weekdays = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
+const minDate = "2026-03-01";
+const maxDate = "2026-07-31";
+const weekdays = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 const quickRanges = [
-  { id: 'last-30-days', label: 'Last 30 days' },
-  { id: 'last-2-months', label: 'Last 2 months' },
-  { id: 'last-3-months', label: 'Last 3 months' },
-  { id: 'last-12-months', label: 'Last 12 months' },
-  { id: 'month-to-date', label: 'Month to date' },
-  { id: 'quarter-to-date', label: 'Quarter to date' }
-]
+  { id: "last-30-days", label: "Last 30 days" },
+  { id: "last-2-months", label: "Last 2 months" },
+  { id: "last-3-months", label: "Last 3 months" },
+  { id: "last-12-months", label: "Last 12 months" },
+  { id: "month-to-date", label: "Month to date" },
+  { id: "quarter-to-date", label: "Quarter to date" },
+];
 
 interface CalendarDay {
-  date: string
-  day: number
+  date: string;
+  day: number;
 }
 
 interface CalendarMonth {
-  key: string
-  label: string
-  days: Array<CalendarDay | null>
+  key: string;
+  label: string;
+  days: Array<CalendarDay | null>;
 }
 
 const parseDate = (value: string) => {
-  const [year = 1970, month = 1, day = 1] = value.split('-').map(Number)
-  return new Date(year, month - 1, day)
-}
+  const [year = 1970, month = 1, day = 1] = value.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
 
 const toDateEnd = (value: string) => {
-  const date = parseDate(value)
-  date.setHours(23, 59, 59, 999)
-  return date
-}
+  const date = parseDate(value);
+  date.setHours(23, 59, 59, 999);
+  return date;
+};
 
 const toDateString = (date: Date) =>
-  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
 const createCalendarMonth = (date: Date): CalendarMonth => {
-  const year = date.getFullYear()
-  const month = date.getMonth()
-  const firstDayOffset = (new Date(year, month, 1).getDay() + 6) % 7
-  const daysInMonth = new Date(year, month + 1, 0).getDate()
-  const days: Array<CalendarDay | null> = Array(firstDayOffset).fill(null)
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const firstDayOffset = (new Date(year, month, 1).getDay() + 6) % 7;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const days: Array<CalendarDay | null> = Array(firstDayOffset).fill(null);
 
   for (let day = 1; day <= daysInMonth; day++) {
-    days.push({ date: toDateString(new Date(year, month, day)), day })
+    days.push({ date: toDateString(new Date(year, month, day)), day });
   }
 
   return {
-    key: `${year}-${String(month + 1).padStart(2, '0')}`,
-    label: date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-    days
-  }
-}
+    key: `${year}-${String(month + 1).padStart(2, "0")}`,
+    label: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+    days,
+  };
+};
 
 const displayedMonths = computed(() => {
-  const firstMonth = new Date(viewMonth.value.getFullYear(), viewMonth.value.getMonth(), 1)
+  const firstMonth = new Date(
+    viewMonth.value.getFullYear(),
+    viewMonth.value.getMonth(),
+    1,
+  );
   return [
     createCalendarMonth(firstMonth),
-    createCalendarMonth(new Date(firstMonth.getFullYear(), firstMonth.getMonth() + 1, 1))
-  ]
-})
+    createCalendarMonth(
+      new Date(firstMonth.getFullYear(), firstMonth.getMonth() + 1, 1),
+    ),
+  ];
+});
 
-const canGoPrevious = computed(() => displayedMonths.value[0]!.key > minDate.slice(0, 7))
-const canGoNext = computed(() => displayedMonths.value[1]!.key < maxDate.slice(0, 7))
+const canGoPrevious = computed(
+  () => displayedMonths.value[0]!.key > minDate.slice(0, 7),
+);
+const canGoNext = computed(
+  () => displayedMonths.value[1]!.key < maxDate.slice(0, 7),
+);
 
 const formatDate = (value: string, options: Intl.DateTimeFormatOptions) =>
-  new Date(`${value}T12:00:00`).toLocaleDateString('en-US', options)
+  new Date(`${value}T12:00:00`).toLocaleDateString("en-US", options);
 
 const rangeLabel = computed(() => {
-  const start = formatDate(props.startDate, { month: 'short', day: 'numeric' })
-  const end = formatDate(props.endDate, { month: 'short', day: 'numeric', year: 'numeric' })
-  return `${start} - ${end}`
-})
+  const start = formatDate(props.startDate, { month: "short", day: "numeric" });
+  const end = formatDate(props.endDate, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  return `${start} - ${end}`;
+});
 
 const openPicker = () => {
-  draftStartDate.value = props.startDate
-  draftEndDate.value = props.endDate
-  selectedPreset.value = ''
-  const endMonth = parseDate(props.endDate)
-  viewMonth.value = new Date(endMonth.getFullYear(), endMonth.getMonth() - 1, 1)
-  showPicker.value = true
-}
+  draftStartDate.value = props.startDate;
+  draftEndDate.value = props.endDate;
+  selectedPreset.value = "";
+  const endMonth = parseDate(props.endDate);
+  viewMonth.value = new Date(
+    endMonth.getFullYear(),
+    endMonth.getMonth() - 1,
+    1,
+  );
+  showPicker.value = true;
+};
 
 const navigateMonths = (amount: number) => {
-  viewMonth.value = new Date(viewMonth.value.getFullYear(), viewMonth.value.getMonth() + amount, 1)
-}
+  viewMonth.value = new Date(
+    viewMonth.value.getFullYear(),
+    viewMonth.value.getMonth() + amount,
+    1,
+  );
+};
 
 const selectDate = (date: string) => {
-  if (date < minDate || date > maxDate) return
-  selectedPreset.value = ''
+  if (date < minDate || date > maxDate) return;
+  selectedPreset.value = "";
 
   if (!draftStartDate.value || draftEndDate.value) {
-    draftStartDate.value = date
-    draftEndDate.value = ''
+    draftStartDate.value = date;
+    draftEndDate.value = "";
   } else if (date < draftStartDate.value) {
-    draftEndDate.value = draftStartDate.value
-    draftStartDate.value = date
+    draftEndDate.value = draftStartDate.value;
+    draftStartDate.value = date;
   } else {
-    draftEndDate.value = date
+    draftEndDate.value = date;
   }
-}
+};
 
 const selectQuickRange = (rangeId: string) => {
-  const end = parseDate(props.endDate)
-  const start = new Date(end)
+  const end = parseDate(props.endDate);
+  const start = new Date(end);
 
-  if (rangeId === 'last-30-days') {
-    start.setDate(start.getDate() - 29)
-  } else if (rangeId === 'last-2-months') {
-    start.setDate(1)
-    start.setMonth(start.getMonth() - 1)
-  } else if (rangeId === 'last-3-months') {
-    start.setDate(1)
-    start.setMonth(start.getMonth() - 2)
-  } else if (rangeId === 'last-12-months') {
-    start.setDate(1)
-    start.setMonth(start.getMonth() - 11)
-  } else if (rangeId === 'month-to-date') {
-    start.setDate(1)
-  } else if (rangeId === 'quarter-to-date') {
-    start.setMonth(Math.floor(start.getMonth() / 3) * 3, 1)
+  if (rangeId === "last-30-days") {
+    start.setDate(start.getDate() - 29);
+  } else if (rangeId === "last-2-months") {
+    start.setDate(1);
+    start.setMonth(start.getMonth() - 1);
+  } else if (rangeId === "last-3-months") {
+    start.setDate(1);
+    start.setMonth(start.getMonth() - 2);
+  } else if (rangeId === "last-12-months") {
+    start.setDate(1);
+    start.setMonth(start.getMonth() - 11);
+  } else if (rangeId === "month-to-date") {
+    start.setDate(1);
+  } else if (rangeId === "quarter-to-date") {
+    start.setMonth(Math.floor(start.getMonth() / 3) * 3, 1);
   }
 
-  draftStartDate.value = toDateString(start) < minDate ? minDate : toDateString(start)
-  draftEndDate.value = props.endDate
-  selectedPreset.value = rangeId
-}
+  draftStartDate.value =
+    toDateString(start) < minDate ? minDate : toDateString(start);
+  draftEndDate.value = props.endDate;
+  selectedPreset.value = rangeId;
+};
 
 const normalizeDraftRange = () => {
-  selectedPreset.value = ''
-  if (draftStartDate.value && draftStartDate.value > maxDate) draftStartDate.value = maxDate
-  if (draftEndDate.value && draftEndDate.value > maxDate) draftEndDate.value = maxDate
-  if (draftStartDate.value && draftStartDate.value < minDate) draftStartDate.value = minDate
-  if (draftEndDate.value && draftEndDate.value < minDate) draftEndDate.value = minDate
-  if (draftStartDate.value && draftEndDate.value && draftStartDate.value > draftEndDate.value) {
-    ;[draftStartDate.value, draftEndDate.value] = [draftEndDate.value, draftStartDate.value]
+  selectedPreset.value = "";
+  if (draftStartDate.value && draftStartDate.value > maxDate)
+    draftStartDate.value = maxDate;
+  if (draftEndDate.value && draftEndDate.value > maxDate)
+    draftEndDate.value = maxDate;
+  if (draftStartDate.value && draftStartDate.value < minDate)
+    draftStartDate.value = minDate;
+  if (draftEndDate.value && draftEndDate.value < minDate)
+    draftEndDate.value = minDate;
+  if (
+    draftStartDate.value &&
+    draftEndDate.value &&
+    draftStartDate.value > draftEndDate.value
+  ) {
+    [draftStartDate.value, draftEndDate.value] = [
+      draftEndDate.value,
+      draftStartDate.value,
+    ];
   }
-}
+};
 
-const isInRange = (date: string) => Boolean(draftStartDate.value && draftEndDate.value
-  && date >= draftStartDate.value && date <= draftEndDate.value)
-const isRangeEndpoint = (date: string) => date === draftStartDate.value || date === draftEndDate.value
-const isDateDisabled = (date: string) => date < minDate || date > maxDate
+const isInRange = (date: string) =>
+  Boolean(
+    draftStartDate.value &&
+    draftEndDate.value &&
+    date >= draftStartDate.value &&
+    date <= draftEndDate.value,
+  );
+const isRangeEndpoint = (date: string) =>
+  date === draftStartDate.value || date === draftEndDate.value;
+const isDateDisabled = (date: string) => date < minDate || date > maxDate;
 
 const applyRange = () => {
-  if (!draftStartDate.value || !draftEndDate.value) return
-  emit('update:startDate', draftStartDate.value)
-  emit('update:endDate', draftEndDate.value)
-  showPicker.value = false
-}
+  if (!draftStartDate.value || !draftEndDate.value) return;
+  emit("update:startDate", draftStartDate.value);
+  emit("update:endDate", draftEndDate.value);
+  showPicker.value = false;
+};
 </script>
 
 <template>
@@ -201,7 +246,11 @@ const applyRange = () => {
 
           <div class="range-main">
             <div class="calendar-months">
-              <section v-for="(month, monthIndex) in displayedMonths" :key="month.key" class="calendar-month">
+              <section
+                v-for="(month, monthIndex) in displayedMonths"
+                :key="month.key"
+                class="calendar-month"
+              >
                 <header class="month-heading">
                   <button
                     v-if="monthIndex === 0"
@@ -226,19 +275,34 @@ const applyRange = () => {
                   <span v-else class="month-nav-spacer" />
                 </header>
                 <div class="weekday-row">
-                  <span v-for="weekday in weekdays" :key="weekday">{{ weekday }}</span>
+                  <span v-for="weekday in weekdays" :key="weekday">{{
+                    weekday
+                  }}</span>
                 </div>
                 <div class="calendar-days">
-                  <template v-for="(day, dayIndex) in month.days" :key="day?.date ?? `blank-${month.key}-${dayIndex}`">
+                  <template
+                    v-for="(day, dayIndex) in month.days"
+                    :key="day?.date ?? `blank-${month.key}-${dayIndex}`"
+                  >
                     <span v-if="!day" class="calendar-blank" />
                     <button
                       v-else
                       type="button"
                       class="calendar-date"
-                      :class="{ 'in-range': isInRange(day.date), endpoint: isRangeEndpoint(day.date) }"
+                      :class="{
+                        'in-range': isInRange(day.date),
+                        endpoint: isRangeEndpoint(day.date),
+                      }"
                       :disabled="isDateDisabled(day.date)"
                       :aria-pressed="isRangeEndpoint(day.date)"
-                      :aria-label="formatDate(day.date, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })"
+                      :aria-label="
+                        formatDate(day.date, {
+                          weekday: 'long',
+                          month: 'long',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })
+                      "
                       @click="selectDate(day.date)"
                     >
                       {{ day.day }}
@@ -252,17 +316,40 @@ const applyRange = () => {
               <div class="date-fields">
                 <label>
                   <span>Start date</span>
-                  <input v-model="draftStartDate" type="date" :min="minDate" :max="maxDate" @change="normalizeDraftRange" />
+                  <input
+                    v-model="draftStartDate"
+                    type="date"
+                    :min="minDate"
+                    :max="maxDate"
+                    @change="normalizeDraftRange"
+                  />
                 </label>
                 <ArrowRightIcon class="date-range-arrow" aria-hidden="true" />
                 <label>
                   <span>End date</span>
-                  <input v-model="draftEndDate" type="date" :min="minDate" :max="maxDate" @change="normalizeDraftRange" />
+                  <input
+                    v-model="draftEndDate"
+                    type="date"
+                    :min="minDate"
+                    :max="maxDate"
+                    @change="normalizeDraftRange"
+                  />
                 </label>
               </div>
               <div class="range-actions">
-                <button class="cancel-range" type="button" @click="showPicker = false">Cancel</button>
-                <button class="apply-range" type="button" :disabled="!draftStartDate || !draftEndDate" @click="applyRange">
+                <button
+                  class="cancel-range"
+                  type="button"
+                  @click="showPicker = false"
+                >
+                  Cancel
+                </button>
+                <button
+                  class="apply-range"
+                  type="button"
+                  :disabled="!draftStartDate || !draftEndDate"
+                  @click="applyRange"
+                >
                   Apply dates
                 </button>
               </div>

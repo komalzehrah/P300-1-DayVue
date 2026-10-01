@@ -1,6 +1,16 @@
 <script setup lang="ts">
-import { ref, computed, inject, nextTick, onBeforeUnmount, onMounted, type Component, type Ref, watch } from 'vue'
-import AddItemModal from '../components/AddItemModal.vue'
+import {
+  ref,
+  computed,
+  inject,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  type Component,
+  type Ref,
+  watch,
+} from "vue";
+import AddItemModal from "../components/AddItemModal.vue";
 import {
   ClockIcon,
   CalendarIcon,
@@ -13,36 +23,36 @@ import {
   TrophyIcon,
   LightBulbIcon,
   UserGroupIcon,
-  CodeBracketIcon
-} from '@heroicons/vue/24/outline'
+  CodeBracketIcon,
+} from "@heroicons/vue/24/outline";
 
 interface ScheduleItem {
-  id: string
-  date?: string
-  time: string
-  title: string
-  duration: number
-  category?: string
-  frequency?: string
-  icon?: string
-  color?: string
+  id: string;
+  date?: string;
+  time: string;
+  title: string;
+  duration: number;
+  category?: string;
+  frequency?: string;
+  icon?: string;
+  color?: string;
 }
 
 interface EventInterval {
-  item: ScheduleItem
-  startMinute: number
-  intervalStart: number
-  intervalEnd: number
+  item: ScheduleItem;
+  startMinute: number;
+  intervalStart: number;
+  intervalEnd: number;
 }
 
 interface PositionedScheduleItem extends ScheduleItem {
-  laneIndex: number
-  laneCount: number
+  laneIndex: number;
+  laneCount: number;
 }
 
 interface DisplayedScheduleItem extends PositionedScheduleItem {
-  displayTop: number
-  displayHeight: number
+  displayTop: number;
+  displayHeight: number;
 }
 
 const scheduleIcons: Record<string, Component> = {
@@ -57,358 +67,462 @@ const scheduleIcons: Record<string, Component> = {
   TrophyIcon,
   LightBulbIcon,
   UserGroupIcon,
-  CodeBracketIcon
-}
+  CodeBracketIcon,
+};
 
-const getScheduleIcon = (name?: string) => scheduleIcons[name ?? 'ClockIcon'] ?? ClockIcon
+const getScheduleIcon = (name?: string) =>
+  scheduleIcons[name ?? "ClockIcon"] ?? ClockIcon;
 
-type CalendarView = 'daily' | 'weekly' | 'monthly'
-const pixelsPerHour = 90
-const pixelsPerMinute = pixelsPerHour / 60
-const eventCardMargin = 1
-const hourLineGap = 1
+type CalendarView = "daily" | "weekly" | "monthly";
+const pixelsPerHour = 90;
+const pixelsPerMinute = pixelsPerHour / 60;
+const eventCardMargin = 1;
+const hourLineGap = 1;
 
-const scheduleItems = inject<Ref<ScheduleItem[]>>('scheduleItems', ref<ScheduleItem[]>([]))
-const scheduleContainer = ref<HTMLElement | null>(null)
-const currentTimeLine = ref<HTMLElement | null>(null)
-const today = new Date()
+const scheduleItems = inject<Ref<ScheduleItem[]>>(
+  "scheduleItems",
+  ref<ScheduleItem[]>([]),
+);
+const scheduleContainer = ref<HTMLElement | null>(null);
+const currentTimeLine = ref<HTMLElement | null>(null);
+const today = new Date();
 const selectedDate = inject<Ref<string>>(
-  'selectedDate',
-  ref(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`)
-)
-const calendarView = inject<Ref<CalendarView>>('scheduleView', ref<CalendarView>('daily'))
-const currentTime = ref(new Date())
-const dragOffsetFromTop = ref(0)
-const showEditModal = ref(false)
-const selectedItem = ref<ScheduleItem | null>(null)
-const gridContainer = ref<HTMLElement | null>(null)
-const draggedItemId = ref('')
-const suppressClickId = ref('')
-let currentTimeTimer: number | undefined
+  "selectedDate",
+  ref(
+    `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`,
+  ),
+);
+const calendarView = inject<Ref<CalendarView>>(
+  "scheduleView",
+  ref<CalendarView>("daily"),
+);
+const currentTime = ref(new Date());
+const dragOffsetFromTop = ref(0);
+const showEditModal = ref(false);
+const selectedItem = ref<ScheduleItem | null>(null);
+const gridContainer = ref<HTMLElement | null>(null);
+const draggedItemId = ref("");
+const suppressClickId = ref("");
+let currentTimeTimer: number | undefined;
 const parseDate = (value: string) => {
-  const [year = 1970, month = 1, day = 1] = value.split('-').map(Number)
-  return new Date(year, month - 1, day)
-}
+  const [year = 1970, month = 1, day = 1] = value.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
 
 const formatDate = (date: Date) =>
-  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
-const isTodaySelected = computed(() => selectedDate.value === formatDate(currentTime.value))
-const currentTimePosition = computed(() => `${(currentTime.value.getHours() * 60 + currentTime.value.getMinutes()) * pixelsPerMinute}px`)
-const currentTimeLabel = computed(() => currentTime.value.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }))
+const isTodaySelected = computed(
+  () => selectedDate.value === formatDate(currentTime.value),
+);
+const currentTimePosition = computed(
+  () =>
+    `${(currentTime.value.getHours() * 60 + currentTime.value.getMinutes()) * pixelsPerMinute}px`,
+);
+const currentTimeLabel = computed(() =>
+  currentTime.value.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  }),
+);
 
 const scrollToDailyPosition = () => {
-  if (calendarView.value !== 'daily') return
+  if (calendarView.value !== "daily") return;
 
   nextTick(() => {
-    const container = scheduleContainer.value
+    const container = scheduleContainer.value;
     const target = isTodaySelected.value
       ? currentTimeLine.value
-      : container?.querySelectorAll<HTMLElement>('.time-slot')[7]
-    if (!container || !target) return
+      : container?.querySelectorAll<HTMLElement>(".time-slot")[7];
+    if (!container || !target) return;
 
-    const containerBounds = container.getBoundingClientRect()
-    const targetOffset = target.getBoundingClientRect().top - containerBounds.top + container.scrollTop
+    const containerBounds = container.getBoundingClientRect();
+    const targetOffset =
+      target.getBoundingClientRect().top -
+      containerBounds.top +
+      container.scrollTop;
     container.scrollTo({
-      top: Math.max(0, targetOffset - (isTodaySelected.value ? container.clientHeight * 0.45 : 0)),
-      behavior: isTodaySelected.value && !window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'smooth' : 'auto'
-    })
-  })
-}
+      top: Math.max(
+        0,
+        targetOffset -
+          (isTodaySelected.value ? container.clientHeight * 0.45 : 0),
+      ),
+      behavior:
+        isTodaySelected.value &&
+        !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "smooth"
+          : "auto",
+    });
+  });
+};
 
-watch([calendarView, selectedDate, isTodaySelected], scrollToDailyPosition, { flush: 'post' })
+watch([calendarView, selectedDate, isTodaySelected], scrollToDailyPosition, {
+  flush: "post",
+});
 
 onMounted(() => {
   currentTimeTimer = window.setInterval(() => {
-    currentTime.value = new Date()
-  }, 60_000)
-  scrollToDailyPosition()
-})
+    currentTime.value = new Date();
+  }, 60_000);
+  scrollToDailyPosition();
+});
 
 onBeforeUnmount(() => {
-  if (currentTimeTimer !== undefined) window.clearInterval(currentTimeTimer)
-})
+  if (currentTimeTimer !== undefined) window.clearInterval(currentTimeTimer);
+});
 
 const weekDays = computed(() => {
-  const firstDay = parseDate(selectedDate.value)
-  firstDay.setDate(firstDay.getDate() - firstDay.getDay())
+  const firstDay = parseDate(selectedDate.value);
+  firstDay.setDate(firstDay.getDate() - firstDay.getDay());
   return Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(firstDay)
-    date.setDate(firstDay.getDate() + index)
-    return date
-  })
-})
+    const date = new Date(firstDay);
+    date.setDate(firstDay.getDate() + index);
+    return date;
+  });
+});
 
 const monthDays = computed(() => {
-  const selected = parseDate(selectedDate.value)
-  const firstDay = new Date(selected.getFullYear(), selected.getMonth(), 1)
-  const daysInMonth = new Date(selected.getFullYear(), selected.getMonth() + 1, 0).getDate()
-  const days: Array<Date | null> = Array(firstDay.getDay()).fill(null)
+  const selected = parseDate(selectedDate.value);
+  const firstDay = new Date(selected.getFullYear(), selected.getMonth(), 1);
+  const daysInMonth = new Date(
+    selected.getFullYear(),
+    selected.getMonth() + 1,
+    0,
+  ).getDate();
+  const days: Array<Date | null> = Array(firstDay.getDay()).fill(null);
 
   for (let day = 1; day <= daysInMonth; day++) {
-    days.push(new Date(selected.getFullYear(), selected.getMonth(), day))
+    days.push(new Date(selected.getFullYear(), selected.getMonth(), day));
   }
 
-  return days
-})
+  return days;
+});
 
 const calendarPeriod = computed(() => {
-  if (calendarView.value === 'weekly') {
-    const firstDay = weekDays.value[0]
-    const lastDay = weekDays.value[6]
-    if (!firstDay || !lastDay) return ''
-    return `${firstDay.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${lastDay.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+  if (calendarView.value === "weekly") {
+    const firstDay = weekDays.value[0];
+    const lastDay = weekDays.value[6];
+    if (!firstDay || !lastDay) return "";
+    return `${firstDay.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${lastDay.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`;
   }
 
-  const selected = parseDate(selectedDate.value)
-  return selected.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-})
+  const selected = parseDate(selectedDate.value);
+  return selected.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+});
 
-const isSelectedDate = (date: Date) => formatDate(date) === selectedDate.value
+const isSelectedDate = (date: Date) => formatDate(date) === selectedDate.value;
 
 const selectCalendarDate = (date: Date) => {
-  selectedDate.value = formatDate(date)
-}
+  selectedDate.value = formatDate(date);
+};
 
-const itemsForDate = (date: Date) => scheduleItems.value.filter((item: ScheduleItem) => {
-  if (item.date) return item.date === formatDate(date)
-  const frequency = (item.frequency || 'daily').toLowerCase()
-  if (frequency === 'weekly') {
-    return date.getDay() === parseDate(selectedDate.value).getDay()
-  }
-  if (frequency === 'monthly') {
-    return date.getDate() === parseDate(selectedDate.value).getDate()
-  }
-  return true
-})
-
-const items = computed(() => itemsForDate(parseDate(selectedDate.value)))
-
-const layoutOverlappingEvents = (sourceItems: ScheduleItem[]): DisplayedScheduleItem[] => {
-  const intervals = sourceItems.map(item => {
-    const [hours = 0, minutes = 0] = item.time.split(':').map(Number)
-    const startMinute = hours * 60 + minutes
-    const endMinute = startMinute + item.duration
-
-    return {
-      item,
-      startMinute,
-      intervalStart: startMinute,
-      intervalEnd: endMinute
+const itemsForDate = (date: Date) =>
+  scheduleItems.value.filter((item: ScheduleItem) => {
+    if (item.date) return item.date === formatDate(date);
+    const frequency = (item.frequency || "daily").toLowerCase();
+    if (frequency === "weekly") {
+      return date.getDay() === parseDate(selectedDate.value).getDay();
     }
-  }).sort((first, second) => first.startMinute - second.startMinute || second.intervalEnd - first.intervalEnd)
+    if (frequency === "monthly") {
+      return date.getDate() === parseDate(selectedDate.value).getDate();
+    }
+    return true;
+  });
 
-  const placed: PositionedScheduleItem[] = []
-  let overlapGroup: EventInterval[] = []
-  let overlapGroupEnd = -1
+const items = computed(() => itemsForDate(parseDate(selectedDate.value)));
+
+const layoutOverlappingEvents = (
+  sourceItems: ScheduleItem[],
+): DisplayedScheduleItem[] => {
+  const intervals = sourceItems
+    .map((item) => {
+      const [hours = 0, minutes = 0] = item.time.split(":").map(Number);
+      const startMinute = hours * 60 + minutes;
+      const endMinute = startMinute + item.duration;
+
+      return {
+        item,
+        startMinute,
+        intervalStart: startMinute,
+        intervalEnd: endMinute,
+      };
+    })
+    .sort(
+      (first, second) =>
+        first.startMinute - second.startMinute ||
+        second.intervalEnd - first.intervalEnd,
+    );
+
+  const placed: PositionedScheduleItem[] = [];
+  let overlapGroup: EventInterval[] = [];
+  let overlapGroupEnd = -1;
 
   const placeOverlapGroup = () => {
-    if (!overlapGroup.length) return
+    if (!overlapGroup.length) return;
 
-    const laneEnds: number[] = []
-    const laneAssignments = overlapGroup.map(interval => {
-      let laneIndex = laneEnds.findIndex(laneEnd => laneEnd <= interval.intervalStart)
+    const laneEnds: number[] = [];
+    const laneAssignments = overlapGroup.map((interval) => {
+      let laneIndex = laneEnds.findIndex(
+        (laneEnd) => laneEnd <= interval.intervalStart,
+      );
       if (laneIndex === -1) {
-        laneIndex = laneEnds.length
-        laneEnds.push(interval.intervalEnd)
+        laneIndex = laneEnds.length;
+        laneEnds.push(interval.intervalEnd);
       } else {
-        laneEnds[laneIndex] = interval.intervalEnd
+        laneEnds[laneIndex] = interval.intervalEnd;
       }
-      return { item: interval.item, laneIndex }
-    })
+      return { item: interval.item, laneIndex };
+    });
 
     for (const assignment of laneAssignments) {
-      placed.push({ ...assignment.item, laneIndex: assignment.laneIndex, laneCount: laneEnds.length })
+      placed.push({
+        ...assignment.item,
+        laneIndex: assignment.laneIndex,
+        laneCount: laneEnds.length,
+      });
     }
-    overlapGroup = []
-    overlapGroupEnd = -1
-  }
+    overlapGroup = [];
+    overlapGroupEnd = -1;
+  };
 
   for (const interval of intervals) {
-    if (overlapGroup.length && interval.startMinute >= overlapGroupEnd) placeOverlapGroup()
-    overlapGroup.push(interval)
-    overlapGroupEnd = Math.max(overlapGroupEnd, interval.intervalEnd)
+    if (overlapGroup.length && interval.startMinute >= overlapGroupEnd)
+      placeOverlapGroup();
+    overlapGroup.push(interval);
+    overlapGroupEnd = Math.max(overlapGroupEnd, interval.intervalEnd);
   }
-  placeOverlapGroup()
+  placeOverlapGroup();
 
-  const positioned: DisplayedScheduleItem[] = []
+  const positioned: DisplayedScheduleItem[] = [];
   const occupiedCards: Array<{
-    item: DisplayedScheduleItem
-    startMinute: number
-    endMinute: number
-    left: number
-    right: number
-  }> = []
+    item: DisplayedScheduleItem;
+    startMinute: number;
+    endMinute: number;
+    left: number;
+    right: number;
+  }> = [];
 
   for (const item of placed.sort((first, second) => {
-    const [firstHours = 0, firstMinutes = 0] = first.time.split(':').map(Number)
-    const [secondHours = 0, secondMinutes = 0] = second.time.split(':').map(Number)
-    return firstHours * 60 + firstMinutes - secondHours * 60 - secondMinutes
+    const [firstHours = 0, firstMinutes = 0] = first.time
+      .split(":")
+      .map(Number);
+    const [secondHours = 0, secondMinutes = 0] = second.time
+      .split(":")
+      .map(Number);
+    return firstHours * 60 + firstMinutes - secondHours * 60 - secondMinutes;
   })) {
-    const [hours = 0, minutes = 0] = item.time.split(':').map(Number)
-    const startMinute = hours * 60 + minutes
-    const endMinute = startMinute + item.duration
-    const startInset = startMinute > 0 && startMinute % 60 === 0 ? eventCardMargin + hourLineGap : 0
-    const endInset = endMinute % 60 === 0 ? hourLineGap - eventCardMargin : -eventCardMargin
-    const naturalTop = Math.max(0, startMinute * pixelsPerMinute - startInset)
-    const naturalBottom = Math.min(24 * pixelsPerHour - eventCardMargin, endMinute * pixelsPerMinute + endInset)
-    const displayHeight = Math.max(naturalBottom - naturalTop, 34)
-    const left = item.laneIndex / item.laneCount
-    const right = (item.laneIndex + 1) / item.laneCount
+    const [hours = 0, minutes = 0] = item.time.split(":").map(Number);
+    const startMinute = hours * 60 + minutes;
+    const endMinute = startMinute + item.duration;
+    const startInset =
+      startMinute > 0 && startMinute % 60 === 0
+        ? eventCardMargin + hourLineGap
+        : 0;
+    const endInset =
+      endMinute % 60 === 0 ? hourLineGap - eventCardMargin : -eventCardMargin;
+    const naturalTop = Math.max(0, startMinute * pixelsPerMinute - startInset);
+    const naturalBottom = Math.min(
+      24 * pixelsPerHour - eventCardMargin,
+      endMinute * pixelsPerMinute + endInset,
+    );
+    const displayHeight = Math.max(naturalBottom - naturalTop, 34);
+    const left = item.laneIndex / item.laneCount;
+    const right = (item.laneIndex + 1) / item.laneCount;
     const previousVisualBottom = occupiedCards
-      .filter(card => card.endMinute <= startMinute && card.left < right && left < card.right)
-      .reduce((bottom, card) => Math.max(bottom, card.item.displayTop + card.item.displayHeight), -Infinity)
-    const displayTop = Math.max(naturalTop, previousVisualBottom + 1)
-    const positionedItem = { ...item, displayTop, displayHeight }
+      .filter(
+        (card) =>
+          card.endMinute <= startMinute &&
+          card.left < right &&
+          left < card.right,
+      )
+      .reduce(
+        (bottom, card) =>
+          Math.max(bottom, card.item.displayTop + card.item.displayHeight),
+        -Infinity,
+      );
+    const displayTop = Math.max(naturalTop, previousVisualBottom + 1);
+    const positionedItem = { ...item, displayTop, displayHeight };
 
-    positioned.push(positionedItem)
-    occupiedCards.push({ item: positionedItem, startMinute, endMinute, left, right })
+    positioned.push(positionedItem);
+    occupiedCards.push({
+      item: positionedItem,
+      startMinute,
+      endMinute,
+      left,
+      right,
+    });
   }
 
-  return positioned
-}
+  return positioned;
+};
 
-const dailyItems = computed(() => layoutOverlappingEvents(items.value))
+const dailyItems = computed(() => layoutOverlappingEvents(items.value));
 
 const formatTime = (time: string) => {
-  const [hours = 0, minutes = 0] = time.split(':').map(Number)
-  const period = hours < 12 ? 'AM' : 'PM'
-  return `${hours % 12 || 12}:${String(minutes).padStart(2, '0')} ${period}`
-}
+  const [hours = 0, minutes = 0] = time.split(":").map(Number);
+  const period = hours < 12 ? "AM" : "PM";
+  return `${hours % 12 || 12}:${String(minutes).padStart(2, "0")} ${period}`;
+};
 
 const hourLabels = computed(() => {
-  const labels = []
+  const labels = [];
   for (let hour = 0; hour < 24; hour++) {
     if (hour === 0) {
-      labels.push('') // Empty for 12AM
+      labels.push(""); // Empty for 12AM
     } else if (hour < 12) {
-      labels.push(`${hour} AM`)
+      labels.push(`${hour} AM`);
     } else if (hour === 12) {
-      labels.push('12 PM')
+      labels.push("12 PM");
     } else {
-      labels.push(`${hour - 12} PM`)
+      labels.push(`${hour - 12} PM`);
     }
   }
-  return labels
-})
+  return labels;
+});
 
 const timeSlots = computed(() => {
-  const slots = []
+  const slots = [];
   for (let hour = 0; hour < 24; hour++) {
-    const timeStr = `${String(hour).padStart(2, '0')}:00`
+    const timeStr = `${String(hour).padStart(2, "0")}:00`;
     slots.push({
       time: timeStr,
-      label: '',
-      isHourStart: true
-    })
+      label: "",
+      isHourStart: true,
+    });
   }
-  return slots
-})
+  return slots;
+});
 
 const getItemStyle = (item: DisplayedScheduleItem) => {
-  const columnWidth = 100 / item.laneCount
-  const leftInset = item.laneIndex === 0 ? '0.5rem' : '0.25rem'
-  const rightInset = item.laneIndex === item.laneCount - 1 ? '0.5rem' : '0.25rem'
-  
+  const columnWidth = 100 / item.laneCount;
+  const leftInset = item.laneIndex === 0 ? "0.5rem" : "0.25rem";
+  const rightInset =
+    item.laneIndex === item.laneCount - 1 ? "0.5rem" : "0.25rem";
+
   return {
     top: `${item.displayTop}px`,
     height: `${item.displayHeight}px`,
     margin: `${eventCardMargin}px`,
-    '--event-color': item.color || 'var(--accent-surface)',
+    "--event-color": item.color || "var(--accent-surface)",
     left: `calc(${columnWidth * item.laneIndex}% + ${leftInset})`,
-    right: `calc(${columnWidth * (item.laneCount - item.laneIndex - 1)}% + ${rightInset})`
-  }
-}
+    right: `calc(${columnWidth * (item.laneCount - item.laneIndex - 1)}% + ${rightInset})`,
+  };
+};
 
 const moveItemToMinute = (item: ScheduleItem, minute: number) => {
-  const sourceItem = scheduleItems.value.find(scheduleItem => scheduleItem.id === item.id) ?? item
-  const latestStart = Math.max(0, Math.floor((24 * 60 - item.duration) / 15) * 15)
-  const startMinute = Math.max(0, Math.min(latestStart, Math.round(minute / 15) * 15))
-  const hours = Math.floor(startMinute / 60)
-  const minutes = startMinute % 60
-  sourceItem.time = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
-}
+  const sourceItem =
+    scheduleItems.value.find((scheduleItem) => scheduleItem.id === item.id) ??
+    item;
+  const latestStart = Math.max(
+    0,
+    Math.floor((24 * 60 - item.duration) / 15) * 15,
+  );
+  const startMinute = Math.max(
+    0,
+    Math.min(latestStart, Math.round(minute / 15) * 15),
+  );
+  const hours = Math.floor(startMinute / 60);
+  const minutes = startMinute % 60;
+  sourceItem.time = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+};
 
-const handleScheduleItemKeydown = (event: KeyboardEvent, item: ScheduleItem) => {
-  if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
-    event.preventDefault()
-    const [hours = 0, minutes = 0] = item.time.split(':').map(Number)
-    const direction = event.key === 'ArrowUp' ? -15 : 15
-    moveItemToMinute(item, hours * 60 + minutes + direction)
-  } else if (event.key === 'Enter' || event.key === ' ') {
-    event.preventDefault()
-    handleScheduleItemClick(item)
+const handleScheduleItemKeydown = (
+  event: KeyboardEvent,
+  item: ScheduleItem,
+) => {
+  if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+    event.preventDefault();
+    const [hours = 0, minutes = 0] = item.time.split(":").map(Number);
+    const direction = event.key === "ArrowUp" ? -15 : 15;
+    moveItemToMinute(item, hours * 60 + minutes + direction);
+  } else if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    handleScheduleItemClick(item);
   }
-}
+};
 
 const handleScheduleDragStart = (event: DragEvent, item: ScheduleItem) => {
-  draggedItemId.value = item.id
-  const card = event.currentTarget as HTMLElement
-  dragOffsetFromTop.value = event.clientY - card.getBoundingClientRect().top
+  draggedItemId.value = item.id;
+  const card = event.currentTarget as HTMLElement;
+  dragOffsetFromTop.value = event.clientY - card.getBoundingClientRect().top;
   if (event.dataTransfer) {
-    event.dataTransfer.effectAllowed = 'move'
-    event.dataTransfer.setData('text/plain', item.id)
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", item.id);
   }
-}
+};
 
 const handleScheduleDragOver = (event: DragEvent) => {
-  if (!draggedItemId.value) return
-  event.preventDefault()
-  if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
-}
+  if (!draggedItemId.value) return;
+  event.preventDefault();
+  if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+};
 
 const handleScheduleDrop = (event: DragEvent) => {
-  event.preventDefault()
-  const itemId = event.dataTransfer?.getData('text/plain') || draggedItemId.value
-  const item = scheduleItems.value.find(scheduleItem => scheduleItem.id === itemId)
-  const grid = gridContainer.value
-  if (!item || !grid) return
+  event.preventDefault();
+  const itemId =
+    event.dataTransfer?.getData("text/plain") || draggedItemId.value;
+  const item = scheduleItems.value.find(
+    (scheduleItem) => scheduleItem.id === itemId,
+  );
+  const grid = gridContainer.value;
+  if (!item || !grid) return;
 
-  const gridTop = grid.getBoundingClientRect().top
-  moveItemToMinute(item, (event.clientY - gridTop - dragOffsetFromTop.value) / pixelsPerMinute)
-  suppressClickId.value = item.id
+  const gridTop = grid.getBoundingClientRect().top;
+  moveItemToMinute(
+    item,
+    (event.clientY - gridTop - dragOffsetFromTop.value) / pixelsPerMinute,
+  );
+  suppressClickId.value = item.id;
   window.setTimeout(() => {
-    if (suppressClickId.value === item.id) suppressClickId.value = ''
-  }, 0)
-  draggedItemId.value = ''
-}
+    if (suppressClickId.value === item.id) suppressClickId.value = "";
+  }, 0);
+  draggedItemId.value = "";
+};
 
 const handleScheduleDragEnd = () => {
-  draggedItemId.value = ''
-}
+  draggedItemId.value = "";
+};
 
 const openEditModal = (item: ScheduleItem) => {
-  selectedItem.value = JSON.parse(JSON.stringify(item))
-  showEditModal.value = true
-}
+  selectedItem.value = JSON.parse(JSON.stringify(item));
+  showEditModal.value = true;
+};
 
 const handleScheduleItemClick = (item: ScheduleItem) => {
   if (suppressClickId.value === item.id) {
-    suppressClickId.value = ''
-    return
+    suppressClickId.value = "";
+    return;
   }
-  openEditModal(item)
-}
+  openEditModal(item);
+};
 
 const closeEditModal = () => {
-  showEditModal.value = false
-  selectedItem.value = null
-}
+  showEditModal.value = false;
+  selectedItem.value = null;
+};
 
-const updateItem = (updatedItem: Pick<ScheduleItem, 'id' | 'title'> & Partial<ScheduleItem>) => {
-  const index = scheduleItems.value.findIndex(item => item.id === updatedItem.id)
-  const existingItem = scheduleItems.value[index]
-  if (existingItem) scheduleItems.value[index] = { ...existingItem, ...updatedItem }
-  closeEditModal()
-}
+const updateItem = (
+  updatedItem: Pick<ScheduleItem, "id" | "title"> & Partial<ScheduleItem>,
+) => {
+  const index = scheduleItems.value.findIndex(
+    (item) => item.id === updatedItem.id,
+  );
+  const existingItem = scheduleItems.value[index];
+  if (existingItem)
+    scheduleItems.value[index] = { ...existingItem, ...updatedItem };
+  closeEditModal();
+};
 
 const deleteItem = (itemId: string) => {
-  const index = scheduleItems.value.findIndex(item => item.id === itemId)
+  const index = scheduleItems.value.findIndex((item) => item.id === itemId);
   if (index !== -1) {
-    scheduleItems.value.splice(index, 1)
+    scheduleItems.value.splice(index, 1);
   }
-  closeEditModal()
-}
+  closeEditModal();
+};
 </script>
 
 <template>
@@ -445,7 +559,10 @@ const deleteItem = (itemId: string) => {
             v-for="item in dailyItems"
             :key="item.id"
             class="schedule-item"
-            :class="{ 'compact-event': item.duration < 45, 'is-dragging': draggedItemId === item.id }"
+            :class="{
+              'compact-event': item.duration < 45,
+              'is-dragging': draggedItemId === item.id,
+            }"
             :style="getItemStyle(item)"
             draggable="true"
             aria-keyshortcuts="ArrowUp ArrowDown Enter Space"
@@ -466,7 +583,13 @@ const deleteItem = (itemId: string) => {
               <small>{{ item.duration }}min</small>
             </span>
           </div>
-          <div v-if="isTodaySelected" ref="currentTimeLine" class="current-time-line" :style="{ top: currentTimePosition }" aria-hidden="true">
+          <div
+            v-if="isTodaySelected"
+            ref="currentTimeLine"
+            class="current-time-line"
+            :style="{ top: currentTimePosition }"
+            aria-hidden="true"
+          >
             <span class="current-time-label">Now {{ currentTimeLabel }}</span>
           </div>
         </div>
@@ -480,7 +603,9 @@ const deleteItem = (itemId: string) => {
           :class="{ selected: isSelectedDate(day) }"
           @click="selectCalendarDate(day)"
         >
-          <span>{{ day.toLocaleDateString('en-US', { weekday: 'short' }) }}</span>
+          <span>{{
+            day.toLocaleDateString("en-US", { weekday: "short" })
+          }}</span>
           <strong>{{ day.getDate() }}</strong>
         </button>
         <div class="week-day-events">
@@ -497,13 +622,19 @@ const deleteItem = (itemId: string) => {
             <time>{{ formatTime(item.time) }}</time>
             <span class="week-event-title">{{ item.title }}</span>
           </button>
-          <span v-if="itemsForDate(day).length === 0" class="no-events">No items</span>
+          <span v-if="itemsForDate(day).length === 0" class="no-events"
+            >No items</span
+          >
         </div>
       </section>
     </div>
 
     <div v-else class="month-grid">
-      <div v-for="day in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" :key="day" class="month-weekday">
+      <div
+        v-for="day in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']"
+        :key="day"
+        class="month-weekday"
+      >
         {{ day }}
       </div>
       <div
@@ -1316,4 +1447,3 @@ const deleteItem = (itemId: string) => {
   }
 }
 </style>
-
