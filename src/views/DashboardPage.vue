@@ -698,6 +698,34 @@ const scheduleChartOptions = computed<ChartOptions<"bar">>(() => ({
 
 <template>
   <div class="dashboard-page">
+    <article
+      class="chart-panel insight-panel"
+      aria-labelledby="pattern-insights-title"
+    >
+      <div class="panel-heading">
+        <div class="panel-copy">
+          <h2 id="pattern-insights-title">Highlights</h2>
+        </div>
+      </div>
+      <div class="pattern-grid">
+        <div
+          v-for="insight in patternInsights.items"
+          :key="insight.label"
+          class="pattern-item"
+        >
+          <span class="pattern-label">{{ insight.label }}</span>
+          <strong class="pattern-value">{{ insight.value }}</strong>
+          <span class="pattern-detail">{{ insight.detail }}</span>
+        </div>
+      </div>
+      <div class="pattern-tips">
+        <h3>Try This</h3>
+        <ul class="pattern-tip-list">
+          <li v-for="tip in patternInsights.tips" :key="tip">{{ tip }}</li>
+        </ul>
+      </div>
+    </article>
+
     <section class="summary-grid" :aria-label="`Summary for ${dateRangeLabel}`">
       <article class="summary-item">
         <span class="summary-label">Calendar commitments</span>
@@ -817,34 +845,6 @@ const scheduleChartOptions = computed<ChartOptions<"bar">>(() => ({
           </span>
         </div>
       </article>
-
-      <article
-        class="chart-panel insight-panel"
-        aria-labelledby="pattern-insights-title"
-      >
-        <div class="panel-heading">
-          <div class="panel-copy">
-            <h2 id="pattern-insights-title">Highlights</h2>
-          </div>
-        </div>
-        <div class="pattern-grid">
-          <div
-            v-for="insight in patternInsights.items"
-            :key="insight.label"
-            class="pattern-item"
-          >
-            <span class="pattern-label">{{ insight.label }}</span>
-            <strong class="pattern-value">{{ insight.value }}</strong>
-            <span class="pattern-detail">{{ insight.detail }}</span>
-          </div>
-        </div>
-        <div class="pattern-tips">
-          <h3>Try This</h3>
-          <ul class="pattern-tip-list">
-            <li v-for="tip in patternInsights.tips" :key="tip">{{ tip }}</li>
-          </ul>
-        </div>
-      </article>
     </section>
   </div>
 </template>
@@ -858,6 +858,13 @@ const scheduleChartOptions = computed<ChartOptions<"bar">>(() => ({
   color: var(--text-primary);
 }
 
+.dashboard-page > .insight-panel {
+  width: min(100%, 1280px);
+  margin-inline: auto;
+  margin-bottom: 1.25rem;
+}
+
+.dashboard-heading,
 .summary-grid,
 .dashboard-grid {
   width: min(100%, 1280px);
